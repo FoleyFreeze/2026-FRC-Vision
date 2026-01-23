@@ -1,0 +1,18 @@
+{
+    "cameras": [
+        {
+            "fps": 60,
+            "height": 1080,
+            "name": "USB Cage Stream Camera 0",
+            "path": "/dev/v4l/by-id/usb-e-con_systems_See3CAM_24CUG_21264C01-video-index0",
+            "pixel format": "mjpeg",
+            "stream": {
+                "properties": []
+            },
+            "width": 1920
+        }
+    ],
+    "ntmode": "client",
+    "switched cameras": [],
+    "team": 910
+}
