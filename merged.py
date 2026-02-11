@@ -21,8 +21,7 @@ import threading
 from pprint import *
 import sys
 import pickle
-from cscore import VideoSource, UsbCamera, MjpegServer
-from ntcore import EventFlags
+
 
 
 
@@ -50,136 +49,73 @@ DECISION_MARGIN_MAX_TOPIC_NAME = "/Vision/Decision Margin Max"
 TAG_CONFIG_FILE_TOPIC_NAME = "/Vision/Tag Config File"
 #ACTIVE_TOPIC_NAME = "/Vision/Active"
 TAG_ACTIVE_TOPIC_NAME = "/Vision/Tag Active" 
-CORAL_ACTIVE_TOPIC_NAME = "/Vision/Coral Active" 
-CAGE_ACTIVE_TOPIC_NAME = "/Vision/Coral Active"
+FUEL_ACTIVE_TOPIC_NAME = "/Vision/Fuel Active" 
 POSE_DATA_RAW_TOPIC_NAME = "Tag Pose Data Bytes" #cannot say /Vision becuase we already do in NTGetRaw
-CORAL_POSE_DATA_RAW_TOPIC_NAME = "Coral Pose Data Bytes" #cannot say /Vision becuase we already do in NTGetRaw
-CAGE_POSE_DATA_RAW_TOPIC_NAME = "Cage Pose Data Bytes" #cannot say /Vision becuase we already do in NTGetRaw
+FUEL_POSE_DATA_RAW_TOPIC_NAME = "Fuel Pose Data Bytes" #cannot say /Vision becuase we already do in NTGetRaw
 POSE_DATA_STRING_TOPIC_NAME_HEADER ="/Vision/Pose Data Header"
-CORAL_POSE_DATA_STRING_TOPIC_NAME_HEADER = "/Vision/Coral Pose Data Header"
-CAGE_POSE_DATA_STRING_TOPIC_NAME_HEADER = "/Vision/Cage Pose Data Header"
+FUEL_POSE_DATA_STRING_TOPIC_NAME_HEADER = "/Vision/Fuel Pose Data Header"
 POSE_DATA_STRING_TOPIC_NAME_DATA_TRANSLATION ="/Vision/Pose Data Trans"
 POSE_DATA_STRING_TOPIC_NAME_DATA_ROTATION ="/Vision/Pose Data Rot"
 TAG_PI_TEMP_TOPIC_NAME = "/Vision/Tag Temperature"
-CORAL_PI_TEMP_TOPIC_NAME = "/Vision/Coral Temperature"
-CAGE_PI_TEMP_TOPIC_NAME = "/Vision/Cage Temperature"
+FUEL_PI_TEMP_TOPIC_NAME = "/Vision/Fuel Temperature"
 RIO_TIME_TOPIC_NAME = "/Vision/RIO Time"
 
 Z_IN_TOPIC_NAME = "/Vision/Z In"
-CORAL_MIN_HUE_TOPIC_NAME = "/Vision/Coral Min Hue"
-CORAL_MIN_SAT_TOPIC_NAME = "/Vision/Coral Min Sat"
-CORAL_MIN_VAL_TOPIC_NAME = "/Vision/Coral Min Val"
-CORAL_MAX_HUE_TOPIC_NAME = "/Vision/Coral Max Hue"
-CORAL_MAX_SAT_TOPIC_NAME = "/Vision/Coral Max Sat"
-CORAL_MAX_VAL_TOPIC_NAME = "/Vision/Coral Max Val"
-CAGE_MIN_HUE_RED_TOPIC_NAME = "/Vision/Cage Min Hue Red"
-CAGE_MIN_SAT_RED_TOPIC_NAME = "/Vision/Cage Min Sat Red"
-CAGE_MIN_VAL_RED_TOPIC_NAME = "/Vision/Cage Min Val Red"
-CAGE_MAX_HUE_RED_TOPIC_NAME = "/Vision/Cage Max Hue Red"
-CAGE_MAX_SAT_RED_TOPIC_NAME = "/Vision/Cage Max Sat Red"
-CAGE_MAX_VAL_RED_TOPIC_NAME = "/Vision/Cage Max Val Red"
-CAGE_MIN_HUE_BLUE_TOPIC_NAME = "/Vision/Cage Min Hue Blue"
-CAGE_MIN_SAT_BLUE_TOPIC_NAME = "/Vision/Cage Min Sat Blue"
-CAGE_MIN_VAL_BLUE_TOPIC_NAME = "/Vision/Cage Min Val Blue"
-CAGE_MAX_HUE_BLUE_TOPIC_NAME = "/Vision/Cage Max Hue Blue"
-CAGE_MAX_SAT_BLUE_TOPIC_NAME = "/Vision/Cage Max Sat Blue"
-CAGE_MAX_VAL_BLUE_TOPIC_NAME = "/Vision/Cage Max Val Blue"
-CORAL_CONFIG_FILE_TOPIC_NAME = "/Vision/Coral Config File"
-CORAL_CONFIG_FILE_DEFAULT = "coral_config.ini"
-CAGE_CONFIG_FILE_TOPIC_NAME = "/Vision/Cage Config File"
-CAGE_CONFIG_FILE_DEFAULT = "cage_config.ini"
+FUEL_MIN_HUE_TOPIC_NAME = "/Vision/Fuel Min Hue"
+FUEL_MIN_SAT_TOPIC_NAME = "/Vision/Fuel Min Sat"
+FUEL_MIN_VAL_TOPIC_NAME = "/Vision/Fuel Min Val"
+FUEL_MAX_HUE_TOPIC_NAME = "/Vision/Fuel Max Hue"
+FUEL_MAX_SAT_TOPIC_NAME = "/Vision/Fuel Max Sat"
+FUEL_MAX_VAL_TOPIC_NAME = "/Vision/Fuel Max Val"
+FUEL_CONFIG_FILE_TOPIC_NAME = "/Vision/Fuel Config File"
+FUEL_CONFIG_FILE_DEFAULT = "fuel_config.ini"
 TAG_CONFIG_FILE_DEFAULT = "tag_config.ini"
 GEN_CONFIG_FILE_DEFAULT = "gen_config.ini"
-CORAL_MIN_HUE = 0
-CORAL_MIN_SAT = 0
-CORAL_MIN_VAL = 0
-CORAL_MAX_HUE = 179
-CORAL_MAX_SAT = 255
-CORAL_MAX_VAL = 255
-CAGE_MIN_HUE_RED = 0
-CAGE_MIN_SAT_RED = 0
-CAGE_MIN_VAL_RED = 0
-CAGE_MAX_HUE_RED = 179
-CAGE_MAX_SAT_RED = 255
-CAGE_MAX_VAL_RED = 255
-CAGE_MIN_HUE_BLUE = 0
-CAGE_MIN_SAT_BLUE = 0
-CAGE_MIN_VAL_BLUE = 0
-CAGE_MAX_HUE_BLUE = 179
-CAGE_MAX_SAT_BLUE = 255
-CAGE_MAX_VAL_BLUE = 255
+FUEL_MIN_HUE = 0
+FUEL_MIN_SAT = 0
+FUEL_MIN_VAL = 0
+FUEL_MAX_HUE = 179
+FUEL_MAX_SAT = 255
+FUEL_MAX_VAL = 255
 TAG_ENABLE_TOPIC_NAME = "/Vision/Tag Enable"
-CORAL_ENABLE_TOPIC_NAME = "/Vision/Coral Enable"
-CAGE_ENABLE_TOPIC_NAME = "/Vision/Cage Enable"
+FUEL_ENABLE_TOPIC_NAME = "/Vision/Fuel Enable"
 TOP_LINE_DIST_FROM_TOP = 0.15
 BOTTOM_LINE_DIST_FROM_TOP = 0.7
-CORAL_MIN_AREA_TOPIC_NAME = "/Vision/Coral Min Area"
-CORAL_MIN_AREA = 23 #275
-CORAL_ANGLE_TOPIC_NAME = "/Vision/Coral Angle"
-CAGE_MIN_AREA_TOPIC_NAME = "/Vision/Cage Min Area"
-CAGE_MIN_AREA = 600 #275
-CAGE_ANGLE_TOPIC_NAME = "/Vision/Cage Angle"
+FUEL_MIN_AREA_TOPIC_NAME = "/Vision/Fuel Min Area"
+FUEL_MIN_AREA = 44 #275
+FUEL_ANGLE_TOPIC_NAME = "/Vision/Fuel Angle"
 WRITE_TAG_IMAGE = False
 TAG_RECORD_ENABLE_TOPIC_NAME = "/Vision/Tag Record"
 TAG_RECORD_REMOVE_TOPIC_NAME = "/Vision/Tag Remove"
-CORAL_RECORD_DATA_TOPIC_NAME = "/Vision/Coral Record"
-CORAL_X_OFFSET = 0
-CORAL_Y_OFFSET = 5
-CAGE_RECORD_DATA_TOPIC_NAME = "/Vision/Cage Record"
-CAGE_X_OFFSET = 0
-CAGE_Y_OFFSET = 0 #5 - 16 # Was 5
-CORAL_MIN_CENTER_Y = 17
-CORAL_MAX_CENTER_Y = 460
-CAGE_MIN_CENTER_Y = 17
-CAGE_MAX_CENTER_Y = 333
-CAGE_CENTER_Y_CLOSE = 260
-CAGE_MIN_ASPECT_RATIO = .2
-CAGE_MAX_ASPECT_RATIO = .7
-CAGE_MIN_EXTENT = .20
-CAGE_MAX_EXTENT = .9
-CAGE_MIN_EXTENT_CLOSE = .3
-CAGE_MAX_EXTENT_CLOSE = .95
-CAGE_MIN_EXTENT_PERP = .6
-CAGE_MAX_EXTENT_PERP = .73
-CAGE_MAX_AR_CLOSE = .8
-CORAL_MIN_ASPECT_RATIO = .3
-CORAL_MAX_ASPECT_RATIO = 3.5
-CAGE_MIN_DISTANCE = 2
-CAGE_MAX_DISTANCE = 92
-CORAL_MIN_DISTANCE = 0
-CORAL_MAX_DISTANCE = 84
-CAGE_MIN_ANGLE = -55
-CAGE_MAX_ANGLE = 55
-CORAL_MIN_ANGLE = 0
-CORAL_MAX_ANGLE = 90
-Y_CROP = 0
+FUEL_RECORD_DATA_TOPIC_NAME = "/Vision/Fuel Record"
+FUEL_X_OFFSET = 0
+FUEL_Y_OFFSET = 5
 FPS_NUM_SAMPLES = 100 #after this number of images the fps average is calulated
-CORAL_Y_CROP_TOPIC_NAME = "/Vision/Coral Y Crop"
-CORAL_NUM_PIXELS_FROM_CENTER_BLANK = 15
-CAGE_Y_CROP_TOPIC_NAME = "/Vision/Cage Y Crop"
-CAGE_NUM_PIXELS_FROM_CENTER_BLANK = 15
+TAG_CROP_TOP_TOPIC_NAME = "/Vision/Tag Crop Top"
+TAG_CROP_BOTTOM_TOPIC_NAME = "/Vision/Tag Crop Bottom"
+TAG_CROP_TOP_DEFAULT = 0 # this is a %; default to no crop
+TAG_CROP_BOTTOM_DEFAULT = 100 # this is a %; default to no crop
+FUEL_NUM_PIXELS_FROM_CENTER_BLANK = 15
 TAG_BRIGHTNESS_TOPIC_NAME = "/Vision/Tag Brightness"
-CORAL_BRIGHTNESS_TOPIC_NAME = "/Vision/Coral Brightness"
-CAGE_BRIGHTNESS_TOPIC_NAME = "/Vision/Cage Brightness"
+FUEL_BRIGHTNESS_TOPIC_NAME = "/Vision/Fuel Brightness"
 
 BRIGHTNESS_DEFAULT = 0.0
 TAG_CONTRAST_TOPIC_NAME = "/Vision/Tag Contrast"
-CORAL_CONTRAST_TOPIC_NAME = "/Vision/Coral Contrast"
-CAGE_CONTRAST_TOPIC_NAME = "/Vision/Cage Contrast"
+FUEL_CONTRAST_TOPIC_NAME = "/Vision/Fuel Contrast"
 CONTRAST_DEFAULT = 1.0
 
-CORAL_Y_OFFSET_TOPIC_NAME = "/Vision/Coral Y Offset"
-CAGE_Y_OFFSET_TOPIC_NAME = "/Vision/Cage Y Offset"
+FUEL_AMOUNT_DETECT_MODE_TOPIC_NAME = "/Vision/Fuel Amount Detection Mode"
+FUEL_AMOUNT_DETECT_MODE_DEFAULT = 2
+
+GEN_FUEL_Y_OFFSET_TOPIC_NAME = "/Vision/Fuel Y Offset"
 
 TAG_ERRORS_TOPIC_NAME = "/Vision/Tag Corrected Errors"
 TAG_ERRORS_DEFAULT = 0
 TAG_AE_TOPIC_NAME = "/Vision/Tag Auto Exposure"
-CORAL_AE_TOPIC_NAME = "/Vision/Coral Auto Exposure"
-CAGE_AE_TOPIC_NAME = "/Vision/Cage Auto Exposure"
+FUEL_AE_TOPIC_NAME = "/Vision/Fuel Auto Exposure"
 AE_DEFAULT = True
 TAG_EXPOSURE_TOPIC_NAME = "/Vision/Tag Manual Exposure" # only used if AE_TOPIC_NAME is disabled
-CORAL_EXPOSURE_TOPIC_NAME = "/Vision/Coral Manual Exposure" # only used if AE_TOPIC_NAME is disabled
-CAGE_EXPOSURE_TOPIC_NAME = "/Vision/Cage Manual Exposure" # only used if AE_TOPIC_NAME is disabled
+FUEL_EXPOSURE_TOPIC_NAME = "/Vision/Fuel Manual Exposure" # only used if AE_TOPIC_NAME is disabled
 EXPOSURE_DEFAULT = 1000 # in microseconds - total guess as default 
 POSE_DATA_X_DEG_TOPIC_NAME = "/Vision/X Deg"
 POSE_DATA_Y_DEG_TOPIC_NAME = "/Vision/Y Deg"
@@ -189,12 +125,6 @@ POSE_DATA_Y_IN_TOPIC_NAME = "/Vision/Y In"
 TAG_DETECTED_ID_TOPIC_NAME = "/Vision/Tag Id"
 TAG_DETECTED_DM_TOPIC_NAME = "/Vision/Tag DM"
 TAG_DETECTED_ERRORS_TOPIC_NAME = "/Vision/Tag Errors"
-
-ALLIANCE_TYPE_TOPIC_NAME = "/FMSInfo/IsRedAlliance"
-PERP_TOPIC_NAME = "/Vision/Is Perpenduclar"
-USE_CAGE_CAM_STREAM = True
-CAGE_DISTANCE_ADJUSTMENT = 2 # inches
-CAGE_ANGLE_ADJUSTMENT = 1 # degrees
 class NTConnectType(Enum):
     SERVER = 1
     CLIENT = 2
@@ -364,12 +294,28 @@ class FrameServer:
                     return self._array
 
 
-def coral_regress_distance(y):
+class PieceData:
+    def __init__(self, num, rio_time, image_time, type, distance, angle):
+        self.image_num = num
+        self.rio_time = rio_time
+        self.image_time = time_time
+        self.type = type
+        self.distance = distance
+        self.angle = angle
+
+
+def fuel_regress_distance(y):
     terms = [
-    -2.5190261681829952e+002,
-     2.6573959253152246e+000,
-    -7.3688136100950232e-003,
-     6.0807308128165267e-006
+     5.6042530346620970e+002,
+    -2.1541292739721818e+001,
+     4.6098851143728686e-001,
+    -5.9768933371784367e-003,
+     4.8838220799736427e-005,
+    -2.5636133459344433e-007,
+     8.6119866667699354e-010,
+    -1.7871693995785495e-012,
+     2.0846186505905067e-015,
+    -1.0446668966595392e-018
     ]
     
     t = 1
@@ -379,7 +325,7 @@ def coral_regress_distance(y):
         t *= y
     return r
 
-def coral_regress_px_per_deg(x):
+def fuel_regress_px_per_deg(x):
     terms = [
      3.0950248997394785e+000,
      1.5607142915418259e-001,
@@ -394,130 +340,179 @@ def coral_regress_px_per_deg(x):
         t *= x
     return r
 
-def cage_regress_distance(y):
+def pose_data_string(sequence_num, rio_time, time, tags, tag_poses, nt_objects):
+    string_header = ""
+    string_header = f'num={sequence_num} t_rio={rio_time:1.3f} t_img={time:1.3f} len={len(tags)}'
+
+    string_data_rot = f'tags={len(tags)} '
+    string_data_t = f'tags={len(tags)} '
+    tag_pose = 0
     
-    terms = [
-        1.5841590981588232e+002,
-        -1.4720781685440105e+000,
-        5.5831522903344180e-003,
-        -7.7508494000204533e-006
-    ]
+    for tag in tags:
+        
+        x_deg = math.degrees(tag_poses[tag_pose].rotation().X())
+        y_deg = math.degrees(tag_poses[tag_pose].rotation().Y())
+        z_deg = math.degrees(tag_poses[tag_pose].rotation().Z())
+        x_in = (tag_poses[tag_pose].translation().X() * 39.3701)
+        y_in = (tag_poses[tag_pose].translation().Y() * 39.3701)
+        z_in = (tag_poses[tag_pose].translation().Z() * 39.3701)
+
+        x_deg_str = f'{x_deg:3.1f}'
+        y_deg_str = f'{y_deg:3.1f}'
+        z_deg_str = f'{z_deg:3.1f}'
+
+        x_in_str = f'{x_in:3.1f}'
+        y_in_str = f'{y_in:3.1f}'
+        z_in_str = f'{z_in:3.1f}'
+
+        string_data_rot += f'id={tag.getId()} \
+        x_deg={x_deg_str} \
+        y_deg={y_deg_str} \
+        z_deg={z_deg_str} '
+
+        id = tag.getId()
+        dm = tag.getDecisionMargin()
+        errors = tag.getHamming()
     
-    t = 1
-    r = 0
-    for c in terms:
-        r += c * t
-        t *= y
-    return r
+        id_str = f'{id}'
+        dm_str = f'{dm:5.1f}'
+        errors_str = f'{errors}'
 
-def cage_regress_px_per_deg(x):
-    terms = [
-     2.6951913744312228e+000,
-     1.6418065324623948e-001,
-    -2.1592428271868368e-003,
-     1.0464701880711019e-005
-    ]   
+        string_data_t += f'id={id_str} dm={dm_str} e={errors_str} \
+        x_in={x_in_str} \
+        #y_in={(tag_poses[tag_pose].translation().Y() - (0.0075 * tag_poses[tag_pose].translation().Z())  * 39.37):3.1f} \
+        y_in={y_in_str} \
+        z_in={z_in_str} '
+        tag_pose +=1
+    
+        nt_objects[0].set(id)
+        nt_objects[1].set(dm)
+        nt_objects[2].set(errors)
+        nt_objects[3].set(x_deg)
+        nt_objects[4].set(y_deg)
+        nt_objects[5].set(z_deg)
+        nt_objects[6].set(x_in)
+        nt_objects[7].set(y_in)
+        nt_objects[8].set(z_in)
 
-    t = 1
-    r = 0
-    for c in terms:
-        r += c * t
-        t *= x
-    return r
+    return string_header, string_data_rot, string_data_t
 
-def cage_pose_data_string(sequence_num, rio_time, time, dist, angle, perp):
-    string_header = f'num={sequence_num} t_rio={rio_time:1.3f} t_img={time:1.3f} z_in={dist:3.1f} y_deg={angle:3.1f} perp={perp}'
+def piece_pose_data_string(sequence_num, rio_time, time, dist, angle):
+    string_header = f'num={sequence_num} t_rio={rio_time:1.3f} t_img={time:1.3f} z_in={dist:3.1f} y_deg={angle:3.1f}'
     
     return string_header
 
-def coral_pose_data_string(sequence_num, rio_time, time, dist, angle, rot):
-    string_header = f'num={sequence_num} t_rio={rio_time:1.3f} t_img={time:1.3f} z_in={dist:3.1f} y_deg={angle:3.1f} rot={rot:3.1f}'
 
-    return string_header
+def draw_tags(img, tags, tag_poses, rVector, tVector, camMatrix, distCoeffs, crop_top):
+    tag_pose = 0
 
-def file_write_corals(file,
+    # need to add crop_top back to all the y dimensions in order to draw everything 
+    # at the right place on the full image 
+    # because the tag detect locations are for a (potentially) cropped image from the full image
+    
+    for tag in tags:
+        x0 = int(tag.getCorner(0).x)
+        y0 = int(tag.getCorner(0).y) + crop_top
+        x1 = int(tag.getCorner(1).x)
+        y1 = int(tag.getCorner(1).y) + crop_top
+        x2 = int(tag.getCorner(2).x)
+        y2 = int(tag.getCorner(2).y) + crop_top
+        x3 = int(tag.getCorner(3).x)
+        y3 = int(tag.getCorner(3).y) + crop_top
+        cv2.line(img, (x0, y0), (x1, y1), (0,255,0), 3) #starts at top left corner of apriltag
+        cv2.line(img, (x1, y1), (x2, y2), (0,255,0), 3) #top left to bottom left
+        cv2.line(img, (x2, y2), (x3, y3), (0,255,0), 3) #bottom left to bottom right
+        cv2.line(img, (x3, y3), (x0, y0), (0,255,0), 3) #bottom right to top right
+        fontFace = cv2.FONT_HERSHEY_TRIPLEX
+        fontScale = 1
+        fontColor = (0, 0, 255)
+        thickness = 2
+        IdStr = str(tag.getId())
+        textWidth, textHeight = cv2.getTextSize(IdStr, fontFace, fontScale, thickness)[0]
+        CenterCoordinates = (int(tag.getCenter().x) - int(textWidth / 2), int( tag.getCenter().y + crop_top) + int(textHeight / 2))
+        cv2.putText(img, IdStr, CenterCoordinates, fontFace, fontScale, fontColor, thickness) # ID in center
+
+        rVector[0][0] = tag_poses[tag_pose].rotation().X()
+        rVector[1][0] = tag_poses[tag_pose].rotation().Y()
+        rVector[2][0] = tag_poses[tag_pose].rotation().Z()
+        tVector[0][0] = tag_poses[tag_pose].translation().X()
+        tVector[1][0] = tag_poses[tag_pose].translation().Y() + crop_top
+        tVector[2][0] = tag_poses[tag_pose].translation().Z()
+        tag_pose += 1
+        #for rotation, ask if its shrinking on each axis 
+        cv2.drawFrameAxes(img, camMatrix, distCoeffs, rVector, tVector, .076, 1)
+    return img
+
+def file_write_tags(file, 
+               threads,
+                decimate, 
+                blur, 
+                refine, 
+                sharpen, 
+                atdebug, 
+                decisionmargin_min,
+                decisionmargin_max,
+                crop_x,
+                crop_y,
+                errors,
+                ):
+
+    parser = configparser.ConfigParser()
+
+    parser.add_section('VISION')
+    parser.set('VISION', THREADS_TOPIC_NAME, str(int(threads)))
+    parser.set('VISION', BLUR_TOPIC_NAME, str(blur))
+    parser.set('VISION', REFINE_EDGES_TOPIC_NAME, str(refine))
+    parser.set('VISION', SHARPENING_TOPIC_NAME, str(round(sharpen,2)))
+    parser.set('VISION', APRILTAG_DEBUG_MODE_TOPIC_NAME, str(atdebug))
+    parser.set('VISION', DECISION_MARGIN_MIN_TOPIC_NAME, str(round(decisionmargin_min)))
+    parser.set('VISION', DECIMATE_TOPIC_NAME, str(round(decimate,2)))
+    parser.set('VISION', TAG_CONFIG_FILE_TOPIC_NAME, str(file))
+    parser.set('VISION', DECISION_MARGIN_MAX_TOPIC_NAME, str(round(decisionmargin_max)))
+    parser.set('VISION', TAG_CROP_TOP_TOPIC_NAME, str(round(crop_x)))
+    parser.set('VISION', TAG_CROP_BOTTOM_TOPIC_NAME, str(round(crop_y)))
+    parser.set('VISION', TAG_ERRORS_TOPIC_NAME, str(errors))
+
+    with open(file, 'w') as config:
+        parser.write(config)
+        print('wrote tag file:')
+        print({'VISION': dict(parser['VISION'])})
+    
+    #print(f'file={file} mh={str(min_h)} ms={str(min_s)} mv={str(min_v)} xh={str(max_h)} xs={str(max_s)} xv={str(max_v)}')
+
+    '''        
+    with open(file, 'w') as config:
+        parser.write(config)
+        print({'VISION': dict(parser['VISION'])})
+    '''
+
+def file_write_fuel(file,
                 min_h,
                 min_s,
                 min_v,
                 max_h,
                 max_s,
                 max_v,
-                contrast,
-                ae,
-                exposure,
-                y_offset,
-                brightness,
-                y_crop):
+                min_area):
+
     parser = configparser.ConfigParser()
 
     parser.add_section('VISION')
-    parser.set('VISION', CORAL_CONFIG_FILE_TOPIC_NAME, str(file))
-    parser.set('VISION', CORAL_MIN_HUE_TOPIC_NAME, str(round(min_h)))
-    parser.set('VISION', CORAL_MIN_SAT_TOPIC_NAME, str(round(min_s)))
-    parser.set('VISION', CORAL_MIN_VAL_TOPIC_NAME, str(round(min_v)))
-    parser.set('VISION', CORAL_MAX_HUE_TOPIC_NAME, str(round(max_h)))
-    parser.set('VISION', CORAL_MAX_SAT_TOPIC_NAME, str(round(max_s)))
-    parser.set('VISION', CORAL_MAX_VAL_TOPIC_NAME, str(round(max_v)))
-    parser.set('VISION', CORAL_CONTRAST_TOPIC_NAME, str((contrast)))
-    parser.set('VISION', CORAL_AE_TOPIC_NAME, str(round(ae)))
-    parser.set('VISION', CORAL_EXPOSURE_TOPIC_NAME, str(round(exposure)))
-    parser.set('VISION', CORAL_Y_OFFSET_TOPIC_NAME, str(round(y_offset)))
-    parser.set('VISION', CORAL_BRIGHTNESS_TOPIC_NAME, str((brightness)))
-    parser.set('VISION', CORAL_Y_CROP_TOPIC_NAME, str(round(y_crop)))
+    parser.set('VISION', FUEL_CONFIG_FILE_TOPIC_NAME, str(file))
+    parser.set('VISION', FUEL_MIN_HUE_TOPIC_NAME, str(round(min_h)))
+    parser.set('VISION', FUEL_MIN_SAT_TOPIC_NAME, str(round(min_s)))
+    parser.set('VISION', FUEL_MIN_VAL_TOPIC_NAME, str(round(min_v)))
+    parser.set('VISION', FUEL_MAX_HUE_TOPIC_NAME, str(round(max_h)))
+    parser.set('VISION', FUEL_MAX_SAT_TOPIC_NAME, str(round(max_s)))
+    parser.set('VISION', FUEL_MAX_VAL_TOPIC_NAME, str(round(max_v)))
+    parser.set('VISION', FUEL_MIN_AREA_TOPIC_NAME, str(round(min_area)))
     
+    #print(f'file={file} mh={str(min_h)} ms={str(min_s)} mv={str(min_v)} xh={str(max_h)} xs={str(max_s)} xv={str(max_v)}')
+
+    #HEY HEY HEY!!! LOOK AT MEEEEE!!!! >>>pscp.exe pi@10.2.33.177:/home/pi/config.ini C:\Users\23JMurphy\Downloads will copy any file from pi to windows<<<
     with open(file, 'w') as config:
         parser.write(config)
-        print('wrote coral file:')
-        print({'VISION': dict(parser['VISION'])})
-
-def file_write_cages(file,
-                min_h_red,
-                min_s_red,
-                min_v_red,
-                max_h_red,
-                max_s_red,
-                max_v_red,
-                min_h_blue,
-                min_s_blue,
-                min_v_blue,
-                max_h_blue,
-                max_s_blue,
-                max_v_blue,
-                contrast,
-                ae,
-                exposure,
-                y_offset,
-                brightness,
-                y_crop):
-
-    parser = configparser.ConfigParser()
-
-    print("gloop")
-
-    parser.add_section('VISION')
-    parser.set('VISION', CAGE_CONFIG_FILE_TOPIC_NAME, str(file))
-    parser.set('VISION', CAGE_MIN_HUE_RED_TOPIC_NAME, str(round(min_h_red)))
-    parser.set('VISION', CAGE_MIN_SAT_RED_TOPIC_NAME, str(round(min_s_red)))
-    parser.set('VISION', CAGE_MIN_VAL_RED_TOPIC_NAME, str(round(min_v_red)))
-    parser.set('VISION', CAGE_MAX_HUE_RED_TOPIC_NAME, str(round(max_h_red)))
-    parser.set('VISION', CAGE_MAX_SAT_RED_TOPIC_NAME, str(round(max_s_red)))
-    parser.set('VISION', CAGE_MAX_VAL_RED_TOPIC_NAME, str(round(max_v_red)))
-    parser.set('VISION', CAGE_MIN_HUE_BLUE_TOPIC_NAME, str(round(min_h_blue)))
-    parser.set('VISION', CAGE_MIN_SAT_BLUE_TOPIC_NAME, str(round(min_s_blue)))
-    parser.set('VISION', CAGE_MIN_VAL_BLUE_TOPIC_NAME, str(round(min_v_blue)))
-    parser.set('VISION', CAGE_MAX_HUE_BLUE_TOPIC_NAME, str(round(max_h_blue)))
-    parser.set('VISION', CAGE_MAX_SAT_BLUE_TOPIC_NAME, str(round(max_s_blue)))
-    parser.set('VISION', CAGE_MAX_VAL_BLUE_TOPIC_NAME, str(round(max_v_blue)))
-    parser.set('VISION', CAGE_CONTRAST_TOPIC_NAME, str((contrast)))
-    parser.set('VISION', CAGE_AE_TOPIC_NAME, str(round(ae)))
-    parser.set('VISION', CAGE_EXPOSURE_TOPIC_NAME, str(round(exposure)))
-    parser.set('VISION', CAGE_Y_OFFSET_TOPIC_NAME, str(round(y_offset)))
-    parser.set('VISION', CAGE_BRIGHTNESS_TOPIC_NAME, str((brightness)))
-    parser.set('VISION', CAGE_Y_CROP_TOPIC_NAME, str(round(y_crop)))
-
-    with open(file, 'w') as config:
-        parser.write(config)
-        print('wrote cage file:')
+        print('wrote fuel file:')
         print({'VISION': dict(parser['VISION'])})
 
 def get_type():
@@ -529,6 +524,38 @@ def camera_upside_down():
     parser= configparser.ConfigParser()
     parser.read('gen_config.ini')
     return(parser.getboolean('GENERAL', 'camera_upside_down'))
+
+def file_read_tag(parser, configfile_failure_ntt):
+    config_exists = os.path.isfile(TAG_CONFIG_FILE_DEFAULT)
+    if config_exists == True:
+        parser.read(TAG_CONFIG_FILE_DEFAULT)
+        configfile_failure_ntt.set(False) #if it works mark no error
+        print('read tag file:')
+        print({'VISION': dict(parser['VISION'])})
+
+    else: # re-create config and container file to default
+        configfile_failure_ntt.set(True) # set error for config file
+
+        parser.add_section('VISION')
+        parser.set('VISION', THREADS_TOPIC_NAME, str(THREADS_DEFAULT))
+        parser.set('VISION', BLUR_TOPIC_NAME, str(BLUR_DEFAULT))
+        parser.set('VISION', REFINE_EDGES_TOPIC_NAME, str(REFINE_EDGES_DEFAULT))
+        parser.set('VISION', SHARPENING_TOPIC_NAME, str(SHARPENING_DEFAULT))
+        parser.set('VISION', APRILTAG_DEBUG_MODE_TOPIC_NAME, str(APRILTAG_DEBUG_MODE_DEFAULT))
+        parser.set('VISION', DECISION_MARGIN_MIN_TOPIC_NAME, str(DECISION_MARGIN_DEFAULT))
+        parser.set('VISION', DECIMATE_TOPIC_NAME, str(DECIMATE_DEFAULT))
+        parser.set('VISION', TAG_CONFIG_FILE_TOPIC_NAME, str(TAG_CONFIG_FILE_DEFAULT))
+        parser.set('VISION', DECISION_MARGIN_MAX_TOPIC_NAME, str(DECISION_MARGIN_DEFAULT))
+        parser.set('VISION', TAG_CROP_TOP_TOPIC_NAME, str(TAG_CROP_DEFAULT))
+        parser.set('VISION', TAG_CROP_BOTTOM_TOPIC_NAME, str(TAG_CROP_DEFAULT))
+        parser.set('VISION', TAG_ERRORS_TOPIC_NAME, str(TAG_ERRORS_DEFAULT))
+
+        with open("/home/pi/" + TAG_CONFIG_FILE_DEFAULT, 'w') as config:
+            parser.write(config)
+            print('wrote tag file:')
+            print({'VISION': dict(parser['VISION'])})
+
+        configfile_failure_ntt.set(True) # recreated config file
 
 def file_read_gen(parser, configfile_failure_ntt):
     config_exists = os.path.isfile(GEN_CONFIG_FILE_DEFAULT)
@@ -544,7 +571,12 @@ def file_read_gen(parser, configfile_failure_ntt):
         parser.add_section('GENERAL')
         parser.set('GENERAL', 'Type', 'None')
         parser.set('GENERAL', 'Camera Upside Down', False)
-       
+        parser.set('GENERAL', 'Brightness', str(BRIGHTNESS_DEFAULT))
+        parser.set('GENERAL', 'Contrast', str(CONTRAST_DEFAULT))
+        parser.set('GENERAL', 'Auto Exposure', str(AE_DEFAULT))
+        parser.set('GENERAL', 'Manual Exposure Time', str(EXPOSURE_DEFAULT))
+        parser.set('GENERAL', 'Y Offset', str(5))
+
         with open("/home/pi/" + GEN_CONFIG_FILE_DEFAULT, 'w') as config:
             parser.write(config)
             print('wrote gen file:')
@@ -552,78 +584,107 @@ def file_read_gen(parser, configfile_failure_ntt):
 
         configfile_failure_ntt.set(True) # recreated config file
 
-def file_read_coral(parser, configfile_failure_ntt):
-    config_exists = os.path.isfile(CORAL_CONFIG_FILE_DEFAULT)
+
+
+def tag_check(tag,config_tag):
+    #print(f'id={tag.getId()} e={tag.getHamming()} DM={int(round(tag.getDecisionMargin()))} x={int(round(tag_pose.translation().X()*39.37))} z={int(round(tag_pose.translation().Z()*39.37))}')
+    #e_max = int(float(config_tag.get('VISION', TAG_ERRORS_TOPIC_NAME)))
+    #print(f'id={tag.getId()} e={tag.getHamming()} e_max={e_max} DM={tag.getDecisionMargin()}')
+
+    if tag.getDecisionMargin() > float(config_tag.get('VISION', DECISION_MARGIN_MIN_TOPIC_NAME)) and \
+        tag.getDecisionMargin() < float(config_tag.get('VISION', DECISION_MARGIN_MAX_TOPIC_NAME)) and \
+        (tag.getHamming() <= int(float(config_tag.get('VISION', TAG_ERRORS_TOPIC_NAME)))) and (tag.getId() >= 1 and tag.getId() <= 16):
+        return True
+    else:
+        e_max = float(config_tag.get('VISION', TAG_ERRORS_TOPIC_NAME))
+        dm_min = float(config_tag.get('VISION', DECISION_MARGIN_MIN_TOPIC_NAME))
+        dm_max = float(config_tag.get('VISION', DECISION_MARGIN_MAX_TOPIC_NAME)) 
+        print(f'id={tag.getId()} e={tag.getHamming()} e_max={e_max} DM={tag.getDecisionMargin()} dm_min={dm_min} dm_max={dm_max}')
+        return False
+
+def file_read_fuel(parser, configfile_failure_ntt):
+    config_exists = os.path.isfile(FUEL_CONFIG_FILE_DEFAULT)
     if config_exists == True:
-        parser.read(CORAL_CONFIG_FILE_DEFAULT)
+        parser.read(FUEL_CONFIG_FILE_DEFAULT)
         configfile_failure_ntt.set(False) #if it works mark no error
-        print('read coral file:')
+        print('read fuel file:')
         print({'VISION': dict(parser['VISION'])})
     else: # re-create config and container file to default
         configfile_failure_ntt.set(True) # set error for config file
 
         parser.add_section('VISION')
         
-        parser.set('VISION', CORAL_CONFIG_FILE_TOPIC_NAME, str(CORAL_CONFIG_FILE_DEFAULT))
-        parser.set('VISION', CORAL_MIN_HUE_TOPIC_NAME, str(CORAL_MIN_HUE))
-        parser.set('VISION', CORAL_MIN_SAT_TOPIC_NAME, str(CORAL_MIN_SAT))
-        parser.set('VISION', CORAL_MIN_VAL_TOPIC_NAME, str(CORAL_MIN_VAL))
-        parser.set('VISION', CORAL_MAX_HUE_TOPIC_NAME, str(CORAL_MAX_HUE))
-        parser.set('VISION', CORAL_MAX_SAT_TOPIC_NAME, str(CORAL_MAX_SAT))
-        parser.set('VISION', CORAL_MAX_VAL_TOPIC_NAME, str(CORAL_MAX_VAL))
-        parser.set('VISION', 'Brightness', str(BRIGHTNESS_DEFAULT))
-        parser.set('VISION', 'Contrast', str(CONTRAST_DEFAULT))
-        parser.set('VISION', 'Auto Exposure', str(AE_DEFAULT))
-        parser.set('VISION', 'Manual Exposure Time', str(EXPOSURE_DEFAULT))
-        parser.set('VISION', 'Y Offset', str(CORAL_Y_OFFSET))
-        parser.set('VISION', 'Y Crop', str(Y_CROP))
+        parser.set('VISION', FUEL_CONFIG_FILE_TOPIC_NAME, str(FUEL_CONFIG_FILE_DEFAULT))
+        parser.set('VISION', FUEL_MIN_HUE_TOPIC_NAME, str(FUEL_MIN_HUE))
+        parser.set('VISION', FUEL_MIN_SAT_TOPIC_NAME, str(FUEL_MIN_SAT))
+        parser.set('VISION', FUEL_MIN_VAL_TOPIC_NAME, str(FUEL_MIN_VAL))
+        parser.set('VISION', FUEL_MAX_HUE_TOPIC_NAME, str(FUEL_MAX_HUE))
+        parser.set('VISION', FUEL_MAX_SAT_TOPIC_NAME, str(FUEL_MAX_SAT))
+        parser.set('VISION', FUEL_MAX_VAL_TOPIC_NAME, str(FUEL_MAX_VAL))
+        parser.set('VISION', FUEL_MIN_AREA_TOPIC_NAME, str(FUEL_MIN_AREA))
 
-
-        with open("/home/pi/" + CORAL_CONFIG_FILE_DEFAULT, 'w') as config:
+        with open("/home/pi/" + FUEL_CONFIG_FILE_DEFAULT, 'w') as config:
             parser.write(config)
-            print('wrote coral file:')
+            print('wrote fuel file:')
             print({'VISION': dict(parser['VISION'])})
         configfile_failure_ntt.set(False) # config file recreated
 
-def file_read_cage(parser, configfile_failure_ntt):
-    config_exists = os.path.isfile(CAGE_CONFIG_FILE_DEFAULT)
-    if config_exists == True:
-        parser.read(CAGE_CONFIG_FILE_DEFAULT)
-        configfile_failure_ntt.set(False) #if it works mark no error
-        print('read cage file:')
-        print({'VISION': dict(parser['VISION'])})
-    else: # re-create config and container file to default
-        configfile_failure_ntt.set(True) # set error for config file
+def file_write_gen(brightness, contrast, ae_mode, man_exposure_time, y_offset):
 
-        parser.add_section('VISION')
-        
-        parser.set('VISION', CAGE_CONFIG_FILE_TOPIC_NAME, str(CAGE_CONFIG_FILE_DEFAULT))
-        parser.set('VISION', CAGE_MIN_HUE_RED_TOPIC_NAME, str(CAGE_MIN_HUE_RED))
-        parser.set('VISION', CAGE_MIN_SAT_RED_TOPIC_NAME, str(CAGE_MIN_SAT_RED))
-        parser.set('VISION', CAGE_MIN_VAL_RED_TOPIC_NAME, str(CAGE_MIN_VAL_RED))
-        parser.set('VISION', CAGE_MAX_HUE_RED_TOPIC_NAME, str(CAGE_MAX_HUE_RED))
-        parser.set('VISION', CAGE_MAX_SAT_RED_TOPIC_NAME, str(CAGE_MAX_SAT_RED))
-        parser.set('VISION', CAGE_MAX_VAL_RED_TOPIC_NAME, str(CAGE_MAX_VAL_RED))
-        parser.set('VISION', CAGE_MIN_HUE_BLUE_TOPIC_NAME, str(CAGE_MIN_HUE_BLUE))
-        parser.set('VISION', CAGE_MIN_SAT_BLUE_TOPIC_NAME, str(CAGE_MIN_SAT_BLUE))
-        parser.set('VISION', CAGE_MIN_VAL_BLUE_TOPIC_NAME, str(CAGE_MIN_VAL_BLUE))
-        parser.set('VISION', CAGE_MAX_HUE_BLUE_TOPIC_NAME, str(CAGE_MAX_HUE_BLUE))
-        parser.set('VISION', CAGE_MAX_SAT_BLUE_TOPIC_NAME, str(CAGE_MAX_SAT_BLUE))
-        parser.set('VISION', CAGE_MAX_VAL_BLUE_TOPIC_NAME, str(CAGE_MAX_VAL_BLUE))
-        parser.set('VISION', 'Brightness', str(BRIGHTNESS_DEFAULT))
-        parser.set('VISION', 'Contrast', str(CONTRAST_DEFAULT))
-        parser.set('VISION', 'Auto Exposure', str(AE_DEFAULT))
-        parser.set('VISION', 'Manual Exposure Time', str(EXPOSURE_DEFAULT))
-        parser.set('VISION', 'Y Offset', str(CAGE_Y_OFFSET))
-        parser.set('VISION', 'Y Crop', str(Y_CROP))
+    parser = configparser.ConfigParser()
+    parser.read("/home/pi/" + GEN_CONFIG_FILE_DEFAULT)
+    parser.set('GENERAL', 'Brightness', str(brightness))
+    parser.set('GENERAL', 'Contrast', str(contrast))
+    parser.set('GENERAL', 'Auto Exposure', str(ae_mode))
+    parser.set('GENERAL', 'Manual Exposure Time', str(man_exposure_time))
+    parser.set('GENERAL', 'Y Offset', str(y_offset))
 
-        with open("/home/pi/" + CAGE_CONFIG_FILE_DEFAULT, 'w') as config:
-            parser.write(config)
-            print('wrote cage file:')
-            print({'VISION': dict(parser['VISION'])})
-        configfile_failure_ntt.set(False) # config file recreated
+    with open("/home/pi/" + GEN_CONFIG_FILE_DEFAULT, 'w') as config:
+        parser.write(config)
+        print('wrote gen file: ' + "/home/pi/" + GEN_CONFIG_FILE_DEFAULT)
+        print({'GENERAL': dict(parser['GENERAL'])})
 
-def nt_update_corals(config,
+def nt_update_tags(config,
+              threads,
+              quadDecimate,
+              blur,
+              refineEdges,
+              decodeSharpening,
+              ATDebug,
+              decision_min,
+              decision_max,
+              crop_x,
+              crop_y,
+              errors,
+              configfile
+            ):
+    # sync the stuff in the file with matching values in the file
+    t = float(config.get('VISION', THREADS_TOPIC_NAME))
+    qd = float(config.get('VISION', DECIMATE_TOPIC_NAME))
+    b = float(config.get('VISION', BLUR_TOPIC_NAME))
+    re = ast.literal_eval(config.get('VISION', REFINE_EDGES_TOPIC_NAME))
+    ds = float(config.get('VISION', SHARPENING_TOPIC_NAME))
+    atd = ast.literal_eval(config.get('VISION', APRILTAG_DEBUG_MODE_TOPIC_NAME))
+    dm_min = float(config.get('VISION', DECISION_MARGIN_MIN_TOPIC_NAME))
+    dm_max = float(config.get('VISION', DECISION_MARGIN_MAX_TOPIC_NAME))
+    c_x = float(config.get('VISION', TAG_CROP_TOP_TOPIC_NAME))
+    c_y = float(config.get('VISION', TAG_CROP_BOTTOM_TOPIC_NAME))
+    e = float(config.get('VISION', TAG_ERRORS_TOPIC_NAME))
+
+    threads.set(t)
+    quadDecimate.set(qd)
+    blur.set(b)
+    refineEdges.set(re)
+    decodeSharpening.set(ds)
+    ATDebug.set(atd)
+    decision_min.set(dm_min)
+    decision_max.set(dm_max)
+    crop_x.set(c_x)
+    crop_y.set(c_y)
+    errors.set(e)
+    #configfile.set(str(config.get('VISION', TAG_CONFIG_FILE_TOPIC_NAME)))
+
+def nt_update_fuel(config,
               configfile,
               min_h,
               min_s,
@@ -631,143 +692,94 @@ def nt_update_corals(config,
               max_h,
               max_s,
               max_v,
-              brightness,
-              contrast,
-              ae,
-              exposure,
-              y_offset,
-              y_crop):
+              min_area):
     # sync the stuff in the file with matching values in the file
 
-    print('dump coral file:')
+    print('dump fuel file:')
     print({'VISION': dict(config['VISION'])})
 
-    mi_h = float(config.get('VISION', CORAL_MIN_HUE_TOPIC_NAME))
-    mi_s = float(config.get('VISION', CORAL_MIN_SAT_TOPIC_NAME))
-    mi_v = float(config.get('VISION', CORAL_MIN_VAL_TOPIC_NAME))
-    mx_h = float(config.get('VISION', CORAL_MAX_HUE_TOPIC_NAME))
-    mx_s = float(config.get('VISION', CORAL_MAX_SAT_TOPIC_NAME))
-    mx_v = float(config.get('VISION', CORAL_MAX_VAL_TOPIC_NAME))
-    bright = float(config.get('VISION', CORAL_BRIGHTNESS_TOPIC_NAME))
-    cont = float(config.get('VISION', CORAL_CONTRAST_TOPIC_NAME))
-    a_ex = bool(config.get('VISION', CORAL_AE_TOPIC_NAME))
-    ex = float(config.get('VISION', CORAL_EXPOSURE_TOPIC_NAME))
-    y_off = float(config.get('VISION', CORAL_Y_OFFSET_TOPIC_NAME))
-    y_crp = float(config.get('VISION', CORAL_Y_CROP_TOPIC_NAME))
+    mi_h = float(config.get('VISION', FUEL_MIN_HUE_TOPIC_NAME))
+    mi_s = float(config.get('VISION', FUEL_MIN_SAT_TOPIC_NAME))
+    mi_v = float(config.get('VISION', FUEL_MIN_VAL_TOPIC_NAME))
 
-    #configfile.set(str(config.get('VISION', CORAL_CONFIG_FILE_TOPIC_NAME)))
+    mx_h = float(config.get('VISION', FUEL_MAX_HUE_TOPIC_NAME))
+    mx_s = float(config.get('VISION', FUEL_MAX_SAT_TOPIC_NAME))
+    mx_v = float(config.get('VISION', FUEL_MAX_VAL_TOPIC_NAME))
+
+    #configfile.set(str(config.get('VISION', FUEL_CONFIG_FILE_TOPIC_NAME)))
     min_h.set(mi_h)
     min_s.set(mi_s)
     min_v.set(mi_v)
     max_h.set(mx_h)
     max_s.set(mx_s)
     max_v.set(mx_v)
-    brightness.set(bright)
-    contrast.set(cont)
-    ae.set(a_ex)
-    exposure.set(ex)
-    y_offset.set(y_off)
-    y_crop.set(y_crp)
+    #min_area.set(float(config.get('VISION', FUEL_MIN_AREA_TOPIC_NAME)))
 
-
-def nt_update_cages(config,
-              configfile,
-              min_h_red,
-              min_s_red,
-              min_v_red,
-              max_h_red,
-              max_s_red,
-              max_v_red,
-              min_h_blue,
-              min_s_blue,
-              min_v_blue,
-              max_h_blue,
-              max_s_blue,
-              max_v_blue,
-              brightness,
-              contrast,
-              ae,
-              exposure,
-              y_offset,
-              y_crop):
-    
+def nt_update_gen(type,
+                  config,
+              tag_brightness,
+              tag_contrast,
+              tag_ae,
+              tag_exposure,
+              fuel_brightness,
+              fuel_contrast,
+              fuel_ae,
+              fuel_exposure,
+              y_offset):
     # sync the stuff in the file with matching values in the file
+    b = float(config.get('GENERAL', 'Brightness'))
+    c = float(config.get('GENERAL', 'Contrast'))
+    ae = bool(config.get('GENERAL', 'Auto Exposure'))
+    exp = float(config.get('GENERAL', 'Manual Exposure Time'))
+    y = float(config.get('GENERAL', 'Y Offset'))
 
-    print('dump cage file:')
-    print({'VISION': dict(config['VISION'])})
-
-    mi_h_r = float(config.get('VISION', CAGE_MIN_HUE_RED_TOPIC_NAME))
-    mi_s_r = float(config.get('VISION', CAGE_MIN_SAT_RED_TOPIC_NAME))
-    mi_v_r = float(config.get('VISION', CAGE_MIN_VAL_RED_TOPIC_NAME))
-
-    mx_h_r = float(config.get('VISION', CAGE_MAX_HUE_RED_TOPIC_NAME))
-    mx_s_r = float(config.get('VISION', CAGE_MAX_SAT_RED_TOPIC_NAME))
-    mx_v_r = float(config.get('VISION', CAGE_MAX_VAL_RED_TOPIC_NAME))
-
-    mi_h_b = float(config.get('VISION', CAGE_MIN_HUE_BLUE_TOPIC_NAME))
-    mi_s_b = float(config.get('VISION', CAGE_MIN_SAT_BLUE_TOPIC_NAME))
-    mi_v_b = float(config.get('VISION', CAGE_MIN_VAL_BLUE_TOPIC_NAME))
-
-    mx_h_b = float(config.get('VISION', CAGE_MAX_HUE_BLUE_TOPIC_NAME))
-    mx_s_b = float(config.get('VISION', CAGE_MAX_SAT_BLUE_TOPIC_NAME))
-    mx_v_b = float(config.get('VISION', CAGE_MAX_VAL_BLUE_TOPIC_NAME))
-
-    bright = float(config.get('VISION', CAGE_BRIGHTNESS_TOPIC_NAME))
-    cont = float(config.get('VISION', CAGE_CONTRAST_TOPIC_NAME))
-    a_ex = bool(config.get('VISION', CAGE_AE_TOPIC_NAME))
-    ex = float(config.get('VISION', CAGE_EXPOSURE_TOPIC_NAME))
-    y_off = float(config.get('VISION', CAGE_Y_OFFSET_TOPIC_NAME))
-    y_crp = float(config.get('VISION', CAGE_Y_CROP_TOPIC_NAME))
-
-    #configfile.set(str(config.get('VISION', CAGE_CONFIG_FILE_TOPIC_NAME)))
-    min_h_red.set(mi_h_r)
-    min_s_red.set(mi_s_r)
-    min_v_red.set(mi_v_r)
-    max_h_red.set(mx_h_r)
-    max_s_red.set(mx_s_r)
-    max_v_red.set(mx_v_r)
-    min_h_blue.set(mi_h_b)
-    min_s_blue.set(mi_s_b)
-    min_v_blue.set(mi_v_b)
-    max_h_blue.set(mx_h_b)
-    max_s_blue.set(mx_s_b)
-    max_v_blue.set(mx_v_b)
-    brightness.set(bright)
-    contrast.set(cont)
-    ae.set(a_ex)
-    exposure.set(ex)
-    y_offset.set(y_off)
-    y_crop.set(y_crp)
-
+    if type == 'tag':
+        tag_brightness.set(b)
+        tag_contrast.set(c)
+        tag_ae.set(ae)
+        tag_exposure.set(exp)
+    else:
+        fuel_brightness.set(b)
+        fuel_contrast.set(c)
+        fuel_ae.set(ae)
+        fuel_exposure.set(exp)
+        y_offset.set(y)
 
 '''
 all data to send is packaged as an array of bytes, using a Python bytearray, in big-endian format:
 sequence number: unsigned long (4 bytes)
 rio time: float (4 bytes)
 image time:float (4 bytes)
-type (tag = 1, coral = 3): unsigned char (1 byte)
-length: how many tags/corals follow
+type (tag = 1, fuel = 3): unsigned char (1 byte)
+length: how many tags/fuel follow
 what follows these first 3 items depends on the type:
 tag:
 number of tags detected: unsigned char (1 byte)
 for each tag: tag id unsigned char (1 byte), pose x: float (4 bytes), pose y: float (4 bytes), pose z: float (4 bytes), pose x angle: float (4 bytes), pose y angle: float (4 bytes), pose z angle: float (4 bytes)
 
-coral:
-number of corals detected: unsigned char (1 byte)
-for each coral: pose x: float (4 bytes), pose y: float (4 bytes), pose z: float (4 bytes), pose x angle: float (4 bytes), pose y angle: float (4 bytes), pose z angle: float (4 bytes)s)
+fuel:
+number of fuel detected: unsigned char (1 byte)
+for each fuel: pose x: float (4 bytes), pose y: float (4 bytes), pose z: float (4 bytes), pose x angle: float (4 bytes), pose y angle: float (4 bytes), pose z angle: float (4 bytes)s)
 '''
-def cage_pose_data_bytes(sequence_num, rio_time, image_time, type, dist, angle, perp):
+def pose_data_bytes(sequence_num, rio_time, image_time, tags, tag_poses):
     byte_array = bytearray()
+    # get a list of tags that were detected
     # start the array with sequence number, the RIO's time, image time, and tag type
-    byte_array += struct.pack(">LffBB", sequence_num, rio_time, image_time, type, 1)
-    byte_array += struct.pack(">ff?", angle, dist, perp) 
+    tag_pose = 0
+    byte_array += struct.pack(">LffBB", sequence_num, rio_time, image_time, 1, len(tags))
+    # subtract 3% of the distance Z from the y because of camera tilt
+    for tag in tags:
+        byte_array += struct.pack(">BBfffffff", tag.getId(), tag.getHamming(), tag.getDecisionMargin(), \
+            tag_poses[tag_pose].rotation().X(), tag_poses[tag_pose].rotation().Y(), tag_poses[tag_pose].rotation().Z(), \
+            tag_poses[tag_pose].translation().X(), tag_poses[tag_pose].translation().Y(), tag_poses[tag_pose].translation().Z())
+        tag_pose += 1
     return byte_array
 
-def coral_pose_data_bytes(sequence_num, rio_time, image_time, type, dist, angle, rot):
+def piece_pose_data_bytes(sequence_num, rio_time, image_time, type, dist, angle):
     byte_array = bytearray()
     # start the array with sequence number, the RIO's time, image time, and tag type
     byte_array += struct.pack(">LffBB", sequence_num, rio_time, image_time, type, 1)
-    byte_array += struct.pack(">fff", angle, dist, rot) 
+    byte_array += struct.pack(">ff", angle, dist) 
     return byte_array
 
 def remove_image_files(path):
@@ -776,163 +788,32 @@ def remove_image_files(path):
         if os.path.isfile(file_path):
             os.remove(file_path)  
 
+class Fuel_Config_Save_Class:
+    def __init__(self, save, fileName, minH, maxH, minS, maxS, minV, maxV, minA):
+        self.save = save
+        self.fileName = fileName
+        self.minH = minH
+        self.maxH = maxH
+        self.minS = minS
+        self.maxS = maxS
+        self.minV = minV
+        self.maxV = maxV
+        self.minA = minA
 
-streamconfigFile = "/boot/frc-stream.json"
 
-class streamCameraConfig: pass
+def fuel_config_save(config):
+    if config.save.get() == True:
+        print("saving...")
+        file_write_fuel(config.fileName.get(), \
+            config.minH.get(), \
+            config.minS.get(), \
+            config.minV.get(), \
+            config.maxH.get(), \
+            config.maxS.get(), \
+            config.maxV.get(), \
+            config.minA.get())
+        config.save.set(False)
 
-team = None
-streamserver = False
-streamcameraConfigs = []
-streamswitchedCameraConfigs = []
-streamcameras = []
-
-def streamparseError(str):
-    """Report parse error."""
-    print("config error in '" + configFile + "': " + str, file=sys.stderr)
-
-def streamreadCameraConfig(config):
-    """Read single camera configuration."""
-    cam = streamCameraConfig()
-
-    # name
-    try:
-        cam.name = config["name"]
-    except KeyError:
-        parseError("could not read camera name")
-        return False
-
-    # path
-    try:
-        cam.path = config["path"]
-    except KeyError:
-        parseError("camera '{}': could not read path".format(cam.name))
-        return False
-
-    # stream properties
-    cam.streamConfig = config.get("stream")
-
-    cam.config = config
-
-    streamcameraConfigs.append(cam)
-    return True
-
-def streamreadSwitchedCameraConfig(config):
-    """Read single switched camera configuration."""
-    cam = streamCameraConfig()
-
-    # name
-    try:
-        cam.name = config["name"]
-    except KeyError:
-        parseError("could not read switched camera name")
-        return False
-
-    # path
-    try:
-        cam.key = config["key"]
-    except KeyError:
-        parseError("switched camera '{}': could not read key".format(cam.name))
-        return False
-
-    streamswitchedCameraConfigs.append(cam)
-    return True
-
-def streamreadConfig():
-    """Read configuration file."""
-    global team
-    global streamserver
-
-    # parse file
-    try:
-        with open(streamconfigFile, "rt", encoding="utf-8") as f:
-            j = json.load(f)
-    except OSError as err:
-        print("could not open '{}': {}".format(streamconfigFile, err), file=sys.stderr)
-        return False
-
-    # top level must be an object
-    if not isinstance(j, dict):
-        parseError("must be JSON object")
-        return False
-
-    # team number
-    try:
-        team = j["team"]
-    except KeyError:
-        parseError("could not read team number")
-        return False
-
-    # ntmode (optional)
-    if "ntmode" in j:
-        str = j["ntmode"]
-        if str.lower() == "client":
-            streamserver = False
-        elif str.lower() == "server":
-            streamserver = True
-        else:
-            parseError("could not understand ntmode value '{}'".format(str))
-
-    # cameras
-    try:
-        streamcameras = j["cameras"]
-    except KeyError:
-        parseError("could not read cameras")
-        return False
-    for camera in streamcameras:
-        if not streamreadCameraConfig(camera):
-            return False
-
-    # switched cameras
-    if "switched cameras" in j:
-        for camera in j["switched cameras"]:
-            if not streamreadSwitchedCameraConfig(camera):
-                return False
-
-    return True
-
-def streamstartCamera(config):
-    """Start running the camera."""
-    print("Starting camera '{}' on {}".format(config.name, config.path))
-    camera = UsbCamera(config.name, config.path)
-    streamserver = CameraServer.startAutomaticCapture(camera=camera)
-
-    camera.setConfigJson(json.dumps(config.config))
-    camera.setConnectionStrategy(VideoSource.ConnectionStrategy.kConnectionKeepOpen)
-
-    if config.streamConfig is not None:
-        streamserver.setConfigJson(json.dumps(config.streamConfig))
-
-    return camera
-
-def streamstartSwitchedCamera(config):
-    """Start running the switched camera."""
-    print("Starting switched camera '{}' on {}".format(config.name, config.key))
-    server = CameraServer.addSwitchedCamera(config.name)
-
-    def listener(event):
-        data = event.data
-        if data is not None:
-            value = data.value.value()
-            if isinstance(value, int):
-                if value >= 0 and value < len(cameras):
-                    server.setSource(cameras[value])
-            elif isinstance(value, float):
-                i = int(value)
-                if i >= 0 and i < len(cameras):
-                    server.setSource(cameras[i])
-            elif isinstance(value, str):
-                for i in range(len(cameraConfigs)):
-                    if value == cameraConfigs[i].name:
-                        server.setSource(cameras[i])
-                        break
-
-    NetworkTableInstance.getDefault().addListener(
-        NetworkTableInstance.getDefault().getEntry(config.key),
-        EventFlags.kImmediate | EventFlags.kValueAll,
-        listener)
-
-    return server
 
 def main():
 
@@ -963,89 +844,97 @@ def main():
         print("Received data from Rio")
 
     # Table for vision output information
-    uptime_ntt = NTGetDouble(ntinst.getDoubleTopic("/Vision/Uptime"), 0, 0, -1)
+    tag_uptime_ntt = NTGetDouble(ntinst.getDoubleTopic("/Vision/Tag Uptime"), 0, 0, -1)
+    fuel_uptime_ntt = NTGetDouble(ntinst.getDoubleTopic("/Vision/Fuel Uptime"), 0, 0, -1)
 
-    debug_cage_ntt =  NTGetBoolean(ntinst.getBooleanTopic("/Vision/Cage Debug Mode"), DEBUG_MODE_DEFAULT, DEBUG_MODE_DEFAULT, DEBUG_MODE_DEFAULT)
-    debug_coral_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Coral Debug Mode"), DEBUG_MODE_DEFAULT, DEBUG_MODE_DEFAULT, DEBUG_MODE_DEFAULT)
-
-    cageconfigfile_ntt = NTGetString(ntinst.getStringTopic(CAGE_CONFIG_FILE_TOPIC_NAME), CAGE_CONFIG_FILE_DEFAULT,CAGE_CONFIG_FILE_DEFAULT, CAGE_CONFIG_FILE_DEFAULT)
-    coralconfigfile_ntt = NTGetString(ntinst.getStringTopic(CORAL_CONFIG_FILE_TOPIC_NAME), CORAL_CONFIG_FILE_DEFAULT,CORAL_CONFIG_FILE_DEFAULT, CORAL_CONFIG_FILE_DEFAULT)
-
+    debug_tag_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Tag Debug Mode"), DEBUG_MODE_DEFAULT, DEBUG_MODE_DEFAULT, DEBUG_MODE_DEFAULT)
+    debug_fuel_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Fuel Debug Mode"), DEBUG_MODE_DEFAULT, DEBUG_MODE_DEFAULT, DEBUG_MODE_DEFAULT)
+    threads_ntt = NTGetDouble(ntinst.getDoubleTopic(THREADS_TOPIC_NAME),THREADS_DEFAULT, THREADS_DEFAULT, THREADS_DEFAULT)
+    quadDecimate_ntt = NTGetDouble(ntinst.getDoubleTopic(DECIMATE_TOPIC_NAME),DECIMATE_DEFAULT, DECIMATE_DEFAULT, DECIMATE_DEFAULT)
+    blur_ntt = NTGetDouble(ntinst.getDoubleTopic(BLUR_TOPIC_NAME),BLUR_DEFAULT, BLUR_DEFAULT, BLUR_DEFAULT) 
+    refineEdges_ntt = NTGetBoolean(ntinst.getBooleanTopic(REFINE_EDGES_TOPIC_NAME),REFINE_EDGES_DEFAULT, REFINE_EDGES_DEFAULT, REFINE_EDGES_DEFAULT) 
+    decodeSharpening_ntt = NTGetDouble(ntinst.getDoubleTopic(SHARPENING_TOPIC_NAME), SHARPENING_DEFAULT, SHARPENING_DEFAULT, SHARPENING_DEFAULT)
+    ATDebug_ntt = NTGetBoolean(ntinst.getBooleanTopic(APRILTAG_DEBUG_MODE_TOPIC_NAME), APRILTAG_DEBUG_MODE_DEFAULT, APRILTAG_DEBUG_MODE_DEFAULT, APRILTAG_DEBUG_MODE_DEFAULT)
+    decision_margin_min_ntt = NTGetDouble(ntinst.getDoubleTopic(DECISION_MARGIN_MIN_TOPIC_NAME), DECISION_MARGIN_DEFAULT, DECISION_MARGIN_DEFAULT, DECISION_MARGIN_DEFAULT)
+    tagconfigfile_ntt = NTGetString(ntinst.getStringTopic(TAG_CONFIG_FILE_TOPIC_NAME), TAG_CONFIG_FILE_DEFAULT,TAG_CONFIG_FILE_DEFAULT, TAG_CONFIG_FILE_DEFAULT)
+    fuelconfigfile_ntt = NTGetString(ntinst.getStringTopic(FUEL_CONFIG_FILE_TOPIC_NAME), FUEL_CONFIG_FILE_DEFAULT,FUEL_CONFIG_FILE_DEFAULT, FUEL_CONFIG_FILE_DEFAULT)
     configfilefail_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Config File Fail"), False, False, False)
+    tag_active_ntt = NTGetBoolean(ntinst.getBooleanTopic(TAG_ACTIVE_TOPIC_NAME), True, True, True)
+    fuel_active_ntt = NTGetBoolean(ntinst.getBooleanTopic(FUEL_ACTIVE_TOPIC_NAME), True, True, True)
+    pose_data_bytes_ntt = NTGetRaw(ntinst, POSE_DATA_RAW_TOPIC_NAME, None, None, None)
+    fuel_pose_data_bytes_ntt = NTGetRaw(ntinst, FUEL_POSE_DATA_RAW_TOPIC_NAME, None, None, None)
+    pose_data_string_header_ntt = NTGetString(ntinst.getStringTopic(POSE_DATA_STRING_TOPIC_NAME_HEADER),"", "", "")
+    fuel_pose_data_string_header_ntt = NTGetString(ntinst.getStringTopic(FUEL_POSE_DATA_STRING_TOPIC_NAME_HEADER),"", "", "") 
+    pose_data_string_data_translation_ntt = NTGetString(ntinst.getStringTopic(POSE_DATA_STRING_TOPIC_NAME_DATA_TRANSLATION),"", "", "")
+    pose_data_string_data_rotation_ntt = NTGetString(ntinst.getStringTopic(POSE_DATA_STRING_TOPIC_NAME_DATA_ROTATION),"", "", "")
+    temp_tag_ntt = NTGetDouble(ntinst.getDoubleTopic(TAG_PI_TEMP_TOPIC_NAME), 0, 0, 0)
+    temp_fuel_ntt = NTGetDouble(ntinst.getDoubleTopic(FUEL_PI_TEMP_TOPIC_NAME), 0, 0, 0)
+    z_in_ntt = NTGetDouble(ntinst.getDoubleTopic(Z_IN_TOPIC_NAME), 0.0, 0.0, 0.0)
+    fuel_min_h_ntt = NTGetDouble(ntinst.getDoubleTopic(FUEL_MIN_HUE_TOPIC_NAME), FUEL_MIN_HUE, FUEL_MIN_HUE, FUEL_MIN_HUE)
+    fuel_min_s_ntt = NTGetDouble(ntinst.getDoubleTopic(FUEL_MIN_SAT_TOPIC_NAME), FUEL_MIN_SAT, FUEL_MIN_SAT, FUEL_MIN_SAT)
+    fuel_min_v_ntt = NTGetDouble(ntinst.getDoubleTopic(FUEL_MIN_VAL_TOPIC_NAME), FUEL_MIN_VAL, FUEL_MIN_VAL, FUEL_MIN_VAL)
+    fuel_max_h_ntt = NTGetDouble(ntinst.getDoubleTopic(FUEL_MAX_HUE_TOPIC_NAME), FUEL_MAX_HUE, FUEL_MAX_HUE, FUEL_MAX_HUE)
+    fuel_max_s_ntt = NTGetDouble(ntinst.getDoubleTopic(FUEL_MAX_SAT_TOPIC_NAME), FUEL_MAX_SAT, FUEL_MAX_SAT, FUEL_MAX_SAT)
+    fuel_max_v_ntt = NTGetDouble(ntinst.getDoubleTopic(FUEL_MAX_VAL_TOPIC_NAME), FUEL_MAX_VAL, FUEL_MAX_VAL, FUEL_MAX_VAL)
+    tag_enable = NTGetBoolean(ntinst.getBooleanTopic(TAG_ENABLE_TOPIC_NAME), False, False, False)
+    fuel_enable_ntt = NTGetBoolean(ntinst.getBooleanTopic(FUEL_ENABLE_TOPIC_NAME), False, False, False)
+    fuel_min_area_ntt = NTGetDouble(ntinst.getDoubleTopic(FUEL_MIN_AREA_TOPIC_NAME), FUEL_MIN_AREA, FUEL_MIN_AREA, FUEL_MIN_AREA)
+    fuel_angle_ntt = NTGetDouble(ntinst.getDoubleTopic(FUEL_ANGLE_TOPIC_NAME), 0.0, 0.0, 0.0)
+    tag_record_ntt = NTGetBoolean(ntinst.getBooleanTopic(TAG_RECORD_ENABLE_TOPIC_NAME), False, False, False)
+    tag_record_remove_ntt = NTGetBoolean(ntinst.getBooleanTopic(TAG_RECORD_REMOVE_TOPIC_NAME), False, False, False)
+    fuel_record_data_ntt = NTGetBoolean(ntinst.getBooleanTopic(FUEL_RECORD_DATA_TOPIC_NAME), False, False, False)
+    decision_margin_max_ntt = NTGetDouble(ntinst.getDoubleTopic(DECISION_MARGIN_MAX_TOPIC_NAME), DECISION_MARGIN_DEFAULT, DECISION_MARGIN_DEFAULT, DECISION_MARGIN_DEFAULT)
+    fuel_distance_ntt = NTGetDouble(ntinst.getDoubleTopic("/Vision/Fuel Distance"), 0.0, 0.0, 0.0)
+    tag_crop_x_ntt = NTGetDouble(ntinst.getDoubleTopic(TAG_CROP_TOP_TOPIC_NAME), TAG_CROP_TOP_DEFAULT, TAG_CROP_TOP_DEFAULT, TAG_CROP_TOP_DEFAULT)
+    tag_crop_y_ntt = NTGetDouble(ntinst.getDoubleTopic(TAG_CROP_BOTTOM_TOPIC_NAME), TAG_CROP_BOTTOM_DEFAULT, TAG_CROP_BOTTOM_DEFAULT, TAG_CROP_BOTTOM_DEFAULT)
+    tag_corrected_errors_ntt = NTGetDouble(ntinst.getDoubleTopic(TAG_ERRORS_TOPIC_NAME), TAG_ERRORS_DEFAULT, TAG_ERRORS_DEFAULT, TAG_ERRORS_DEFAULT)
+    pose_data_x_deg_ntt = NTGetDouble(ntinst.getDoubleTopic(POSE_DATA_X_DEG_TOPIC_NAME), 0.0, 0.0, 0.0)
+    pose_data_y_deg_ntt = NTGetDouble(ntinst.getDoubleTopic(POSE_DATA_Y_DEG_TOPIC_NAME), 0.0, 0.0, 0.0)
+    pose_data_z_deg_ntt = NTGetDouble(ntinst.getDoubleTopic(POSE_DATA_Z_DEG_TOPIC_NAME), 0.0, 0.0, 0.0)
+    pose_data_x_in_ntt = NTGetDouble(ntinst.getDoubleTopic(POSE_DATA_X_IN_TOPIC_NAME), 0.0, 0.0, 0.0)
+    pose_data_y_in_ntt = NTGetDouble(ntinst.getDoubleTopic(POSE_DATA_Y_IN_TOPIC_NAME), 0.0, 0.0, 0.0)
+    tag_detected_id_ntt = NTGetDouble(ntinst.getDoubleTopic(TAG_DETECTED_ID_TOPIC_NAME), 0, 0, 0)
+    tag_detected_dm_ntt = NTGetDouble(ntinst.getDoubleTopic(TAG_DETECTED_DM_TOPIC_NAME), 0, 0, 0)
+    tag_detected_errors_ntt = NTGetDouble(ntinst.getDoubleTopic(TAG_DETECTED_ERRORS_TOPIC_NAME), 0, 0, 0)
 
-    cage_active_ntt = NTGetBoolean(ntinst.getBooleanTopic(CORAL_ACTIVE_TOPIC_NAME), True, True, True)
-    coral_active_ntt = NTGetBoolean(ntinst.getBooleanTopic(CORAL_ACTIVE_TOPIC_NAME), True, True, True)
+    tag_brightness_ntt = NTGetDouble(ntinst.getDoubleTopic(TAG_BRIGHTNESS_TOPIC_NAME), BRIGHTNESS_DEFAULT, BRIGHTNESS_DEFAULT, BRIGHTNESS_DEFAULT)
+    tag_contrast_ntt = NTGetDouble(ntinst.getDoubleTopic(TAG_CONTRAST_TOPIC_NAME), CONTRAST_DEFAULT, CONTRAST_DEFAULT, CONTRAST_DEFAULT)
+    tag_ae_ntt = NTGetBoolean(ntinst.getBooleanTopic(TAG_AE_TOPIC_NAME), AE_DEFAULT, AE_DEFAULT, AE_DEFAULT)
+    tag_exposure_ntt = NTGetDouble(ntinst.getDoubleTopic(TAG_EXPOSURE_TOPIC_NAME), EXPOSURE_DEFAULT, EXPOSURE_DEFAULT, EXPOSURE_DEFAULT)
 
-    coral_pose_data_bytes_ntt = NTGetRaw(ntinst, CORAL_POSE_DATA_RAW_TOPIC_NAME, None, None, None)
-    cage_pose_data_bytes_ntt = NTGetRaw(ntinst, CAGE_POSE_DATA_RAW_TOPIC_NAME, None, None, None)
+    fuel_brightness_ntt = NTGetDouble(ntinst.getDoubleTopic(FUEL_BRIGHTNESS_TOPIC_NAME), BRIGHTNESS_DEFAULT, BRIGHTNESS_DEFAULT, BRIGHTNESS_DEFAULT)
+    fuel_contrast_ntt = NTGetDouble(ntinst.getDoubleTopic(FUEL_CONTRAST_TOPIC_NAME), CONTRAST_DEFAULT, CONTRAST_DEFAULT, CONTRAST_DEFAULT)
+    fuel_ae_ntt = NTGetBoolean(ntinst.getBooleanTopic(FUEL_AE_TOPIC_NAME), AE_DEFAULT, AE_DEFAULT, AE_DEFAULT)
+    fuel_exposure_ntt = NTGetDouble(ntinst.getDoubleTopic(FUEL_EXPOSURE_TOPIC_NAME), EXPOSURE_DEFAULT, EXPOSURE_DEFAULT, EXPOSURE_DEFAULT)
 
-    coral_pose_data_string_header_ntt = NTGetString(ntinst.getStringTopic(CORAL_POSE_DATA_STRING_TOPIC_NAME_HEADER),"", "", "") 
-    cage_pose_data_string_header_ntt = NTGetString(ntinst.getStringTopic(CAGE_POSE_DATA_STRING_TOPIC_NAME_HEADER),"", "", "")
+    tag_config_savefile_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Tag Config Save"), False, False, False)
+    fuel_config_savefile_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Fuel Config Save"), False, False, False)
+    tag_camera_safefile_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Tag Camera Save"), False, False, False)
+    fuel_camera_savefile_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Fuel Camera Save"), False, False, False)
+    fuel_camera_refresh_nt_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Fuel Camera Refresh Nt"), False, False, False)
 
-    temp_coral_ntt = NTGetDouble(ntinst.getDoubleTopic(CORAL_PI_TEMP_TOPIC_NAME), 0, 0, 0)
-    temp_cage_ntt = NTGetDouble(ntinst.getDoubleTopic(CAGE_PI_TEMP_TOPIC_NAME), 0, 0, 0)
+    fuel_amount_detect_mode_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Fuel Amount Detection Mode"), False, False, False)
 
-    cage_min_h_red_ntt = NTGetDouble(ntinst.getDoubleTopic(CAGE_MIN_HUE_RED_TOPIC_NAME), CAGE_MIN_HUE_RED, CAGE_MIN_HUE_RED, CAGE_MIN_HUE_RED)
-    cage_min_s_red_ntt = NTGetDouble(ntinst.getDoubleTopic(CAGE_MIN_SAT_RED_TOPIC_NAME), CAGE_MIN_SAT_RED, CAGE_MIN_SAT_RED, CAGE_MIN_SAT_RED)
-    cage_min_v_red_ntt = NTGetDouble(ntinst.getDoubleTopic(CAGE_MIN_VAL_RED_TOPIC_NAME), CAGE_MIN_VAL_RED, CAGE_MIN_VAL_RED, CAGE_MIN_VAL_RED)
-    cage_max_h_red_ntt = NTGetDouble(ntinst.getDoubleTopic(CAGE_MAX_HUE_RED_TOPIC_NAME), CAGE_MAX_HUE_RED, CAGE_MAX_HUE_RED, CAGE_MAX_HUE_RED)
-    cage_max_s_red_ntt = NTGetDouble(ntinst.getDoubleTopic(CAGE_MAX_SAT_RED_TOPIC_NAME), CAGE_MAX_SAT_RED, CAGE_MAX_SAT_RED, CAGE_MAX_SAT_RED)
-    cage_max_v_red_ntt = NTGetDouble(ntinst.getDoubleTopic(CAGE_MAX_VAL_RED_TOPIC_NAME), CAGE_MAX_VAL_RED, CAGE_MAX_VAL_RED, CAGE_MAX_VAL_RED)
+    gen_fuel_y_offset_ntt =  NTGetDouble(ntinst.getDoubleTopic(GEN_FUEL_Y_OFFSET_TOPIC_NAME), 0, 0, 0)
 
-    cage_min_h_blue_ntt = NTGetDouble(ntinst.getDoubleTopic(CAGE_MIN_HUE_BLUE_TOPIC_NAME), CAGE_MIN_HUE_BLUE, CAGE_MIN_HUE_BLUE, CAGE_MIN_HUE_BLUE)
-    cage_min_s_blue_ntt = NTGetDouble(ntinst.getDoubleTopic(CAGE_MIN_SAT_BLUE_TOPIC_NAME), CAGE_MIN_SAT_BLUE, CAGE_MIN_SAT_BLUE, CAGE_MIN_SAT_BLUE)
-    cage_min_v_blue_ntt = NTGetDouble(ntinst.getDoubleTopic(CAGE_MIN_VAL_BLUE_TOPIC_NAME), CAGE_MIN_VAL_BLUE, CAGE_MIN_VAL_BLUE, CAGE_MIN_VAL_BLUE)
-    cage_max_h_blue_ntt = NTGetDouble(ntinst.getDoubleTopic(CAGE_MAX_HUE_BLUE_TOPIC_NAME), CAGE_MAX_HUE_BLUE, CAGE_MAX_HUE_BLUE, CAGE_MAX_HUE_BLUE)
-    cage_max_s_blue_ntt = NTGetDouble(ntinst.getDoubleTopic(CAGE_MAX_SAT_BLUE_TOPIC_NAME), CAGE_MAX_SAT_BLUE, CAGE_MAX_SAT_BLUE, CAGE_MAX_SAT_BLUE)
-    cage_max_v_blue_ntt = NTGetDouble(ntinst.getDoubleTopic(CAGE_MAX_VAL_BLUE_TOPIC_NAME), CAGE_MAX_VAL_BLUE, CAGE_MAX_VAL_BLUE, CAGE_MAX_VAL_BLUE)
-
-    coral_min_h_ntt = NTGetDouble(ntinst.getDoubleTopic(CORAL_MIN_HUE_TOPIC_NAME), CORAL_MIN_HUE, CORAL_MIN_HUE, CORAL_MIN_HUE)
-    coral_min_s_ntt = NTGetDouble(ntinst.getDoubleTopic(CORAL_MIN_SAT_TOPIC_NAME), CORAL_MIN_SAT, CORAL_MIN_SAT, CORAL_MIN_SAT)
-    coral_min_v_ntt = NTGetDouble(ntinst.getDoubleTopic(CORAL_MIN_VAL_TOPIC_NAME), CORAL_MIN_VAL, CORAL_MIN_VAL, CORAL_MIN_VAL)
-    coral_max_h_ntt = NTGetDouble(ntinst.getDoubleTopic(CORAL_MAX_HUE_TOPIC_NAME), CORAL_MAX_HUE, CORAL_MAX_HUE, CORAL_MAX_HUE)
-    coral_max_s_ntt = NTGetDouble(ntinst.getDoubleTopic(CORAL_MAX_SAT_TOPIC_NAME), CORAL_MAX_SAT, CORAL_MAX_SAT, CORAL_MAX_SAT)
-    coral_max_v_ntt = NTGetDouble(ntinst.getDoubleTopic(CORAL_MAX_VAL_TOPIC_NAME), CORAL_MAX_VAL, CORAL_MAX_VAL, CORAL_MAX_VAL)
-
-    coral_enable_ntt = NTGetBoolean(ntinst.getBooleanTopic(CORAL_ENABLE_TOPIC_NAME), False, False, False)
-    cage_enable_ntt = NTGetBoolean(ntinst.getBooleanTopic(CAGE_ENABLE_TOPIC_NAME), False, False, False)
-
-    coral_angle_ntt = NTGetDouble(ntinst.getDoubleTopic(CORAL_ANGLE_TOPIC_NAME), 0.0, 0.0, 0.0)
-    coral_record_data_ntt = NTGetBoolean(ntinst.getBooleanTopic(CORAL_RECORD_DATA_TOPIC_NAME), False, False, False)
-    coral_distance_ntt = NTGetDouble(ntinst.getDoubleTopic("/Vision/Coral Distance"), 0.0, 0.0, 0.0)
-
-    cage_angle_ntt = NTGetDouble(ntinst.getDoubleTopic(CAGE_ANGLE_TOPIC_NAME), 0.0, 0.0, 0.0)
-    cage_record_data_ntt = NTGetBoolean(ntinst.getBooleanTopic(CAGE_RECORD_DATA_TOPIC_NAME), False, False, False)
-    cage_distance_ntt = NTGetDouble(ntinst.getDoubleTopic("/Vision/Cage Distance"), 0.0, 0.0, 0.0)
-
-    coral_brightness_ntt = NTGetDouble(ntinst.getDoubleTopic(CORAL_BRIGHTNESS_TOPIC_NAME), BRIGHTNESS_DEFAULT, BRIGHTNESS_DEFAULT, BRIGHTNESS_DEFAULT)
-    coral_contrast_ntt = NTGetDouble(ntinst.getDoubleTopic(CORAL_CONTRAST_TOPIC_NAME),  CONTRAST_DEFAULT, CONTRAST_DEFAULT, CONTRAST_DEFAULT)
-    coral_ae_ntt = NTGetBoolean(ntinst.getBooleanTopic(CORAL_AE_TOPIC_NAME), AE_DEFAULT, AE_DEFAULT, AE_DEFAULT)
-    coral_exposure_ntt = NTGetDouble(ntinst.getDoubleTopic(CORAL_EXPOSURE_TOPIC_NAME), EXPOSURE_DEFAULT, EXPOSURE_DEFAULT, EXPOSURE_DEFAULT)
-    coral_crop_y_ntt = NTGetDouble(ntinst.getDoubleTopic(CORAL_Y_CROP_TOPIC_NAME), 0, 0, 0)
-
-    cage_brightness_ntt = NTGetDouble(ntinst.getDoubleTopic(CAGE_BRIGHTNESS_TOPIC_NAME), BRIGHTNESS_DEFAULT, BRIGHTNESS_DEFAULT, BRIGHTNESS_DEFAULT)
-    cage_contrast_ntt = NTGetDouble(ntinst.getDoubleTopic(CAGE_CONTRAST_TOPIC_NAME),  CONTRAST_DEFAULT, CONTRAST_DEFAULT, CONTRAST_DEFAULT)
-    cage_ae_ntt = NTGetBoolean(ntinst.getBooleanTopic(CAGE_AE_TOPIC_NAME), AE_DEFAULT, AE_DEFAULT, AE_DEFAULT)
-    cage_exposure_ntt = NTGetDouble(ntinst.getDoubleTopic(CAGE_EXPOSURE_TOPIC_NAME), EXPOSURE_DEFAULT, EXPOSURE_DEFAULT, EXPOSURE_DEFAULT)
-    cage_crop_y_ntt = NTGetDouble(ntinst.getDoubleTopic(CAGE_Y_CROP_TOPIC_NAME), 0, 0, 0)
-
-
-    coral_config_savefile_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Coral Config Save"), False, False, False)
-    coral_camera_savefile_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Coral Camera Save"), False, False, False)
-    coral_camera_refresh_nt_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Coral Camera Refresh Nt"), False, False, False)
-    coral_y_offset_ntt =  NTGetDouble(ntinst.getDoubleTopic(CORAL_Y_OFFSET_TOPIC_NAME), 0, 0, 0)
-    cage_y_offset_ntt =  NTGetDouble(ntinst.getDoubleTopic(CAGE_Y_OFFSET_TOPIC_NAME), 0, 0, 0)
-    cage_config_savefile_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Cage Config Save"), False, False, False)
-    cage_camera_savefile_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Cage Camera Save"), False, False, False)
-    cage_camera_refresh_nt_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Cage Camera Refresh Nt"), False, False, False)
-
-    is_red_alliance = NTGetBoolean(ntinst.getBooleanTopic(ALLIANCE_TYPE_TOPIC_NAME), True, True, True)
-    perp_ntt = NTGetBoolean(ntinst.getBooleanTopic(PERP_TOPIC_NAME), False, False, False)
+    detector = robotpy_apriltag.AprilTagDetector()
+    #detector.addFamily("tag16h5")
+    detector.addFamily("tag36h11")
 
     # use for file
-    config_coral = configparser.ConfigParser()
+    config_tag = configparser.ConfigParser()
+    config_fuel = configparser.ConfigParser()
     config_gen = configparser.ConfigParser()
-    config_cage = configparser.ConfigParser()
+
+    fuelConfigSave = Fuel_Config_Save_Class(fuel_config_savefile_ntt, \
+        fuelconfigfile_ntt, \
+        fuel_min_h_ntt, \
+        fuel_max_h_ntt, \
+        fuel_min_s_ntt, \
+        fuel_max_s_ntt, \
+        fuel_min_v_ntt, \
+        fuel_max_v_ntt, \
+        fuel_min_area_ntt)
 
     '''
     print('*****')
@@ -1056,47 +945,63 @@ def main():
     return(parser.get('GENERAL', 'type'))
     '''
 
+    file_read_tag(config_tag, configfilefail_ntt)
+    nt_update_tags(config_tag,threads_ntt, quadDecimate_ntt, blur_ntt, refineEdges_ntt, \
+        decodeSharpening_ntt, ATDebug_ntt, decision_margin_min_ntt, decision_margin_max_ntt, \
+        tag_crop_x_ntt, tag_crop_y_ntt, tag_corrected_errors_ntt, tagconfigfile_ntt)
+        
+    file_read_fuel(config_fuel, configfilefail_ntt)
+    nt_update_fuel(config_fuel, fuelconfigfile_ntt, \
+        fuel_min_h_ntt, fuel_min_s_ntt, fuel_min_v_ntt, fuel_max_h_ntt, fuel_max_s_ntt, fuel_max_v_ntt, \
+        fuel_min_area_ntt)
+
     file_read_gen(config_gen, configfilefail_ntt)
-
-    file_read_coral(config_coral, configfilefail_ntt)
-    nt_update_corals(config_coral, coralconfigfile_ntt, \
-        coral_min_h_ntt, coral_min_s_ntt, coral_min_v_ntt, coral_max_h_ntt, coral_max_s_ntt, coral_max_v_ntt, \
-            coral_brightness_ntt, coral_contrast_ntt, coral_ae_ntt, \
-            coral_exposure_ntt, coral_y_offset_ntt, coral_crop_y_ntt)
-
-    file_read_cage(config_cage, configfilefail_ntt)
-    nt_update_cages(config_cage, cageconfigfile_ntt, \
-        cage_min_h_red_ntt, cage_min_s_red_ntt, cage_min_v_red_ntt, \
-            cage_max_h_red_ntt, cage_max_s_red_ntt, cage_max_v_red_ntt, \
-            cage_min_h_blue_ntt, cage_min_s_blue_ntt, cage_min_v_blue_ntt, \
-            cage_max_h_blue_ntt, cage_max_s_blue_ntt, cage_max_v_blue_ntt, \
-            cage_brightness_ntt, cage_contrast_ntt, cage_ae_ntt, cage_exposure_ntt, cage_y_offset_ntt, cage_crop_y_ntt)
-
+    nt_update_gen(vision_type, config_gen, tag_brightness_ntt, tag_contrast_ntt, tag_ae_ntt, tag_exposure_ntt, \
+        fuel_brightness_ntt, fuel_contrast_ntt, fuel_ae_ntt, fuel_exposure_ntt, gen_fuel_y_offset_ntt)
     
-    file_read_gen(config_gen, configfilefail_ntt)
+    detectorConfig = robotpy_apriltag.AprilTagDetector.Config()
+
+    detectorConfig.numThreads = int(float(config_tag.get('VISION', THREADS_TOPIC_NAME)))
+    detectorConfig.quadDecimate = float(config_tag.get('VISION', DECIMATE_TOPIC_NAME))
+    detectorConfig.quadSigma = float (config_tag.get('VISION', BLUR_TOPIC_NAME))
+    detectorConfig.refineEdges = ast.literal_eval(config_tag.get('VISION', REFINE_EDGES_TOPIC_NAME))
+    detectorConfig.decodeSharpening = float(config_tag.get('VISION', SHARPENING_TOPIC_NAME))
+    detectorConfig.debug = ast.literal_eval(config_tag.get('VISION', APRILTAG_DEBUG_MODE_TOPIC_NAME))
+    detector.setConfig(detectorConfig)
     
-    coral_min_h = int(config_coral.get('VISION', CORAL_MIN_HUE_TOPIC_NAME))
-    coral_min_s = int(config_coral.get('VISION', CORAL_MIN_SAT_TOPIC_NAME))
-    coral_min_v = int(config_coral.get('VISION', CORAL_MIN_VAL_TOPIC_NAME))
-    coral_max_h = int(config_coral.get('VISION', CORAL_MAX_HUE_TOPIC_NAME))
-    coral_max_s = int(config_coral.get('VISION', CORAL_MAX_SAT_TOPIC_NAME))
-    coral_max_v = int(config_coral.get('VISION', CORAL_MAX_VAL_TOPIC_NAME))
 
-    cage_min_h_red = int(config_cage.get('VISION', CAGE_MIN_HUE_RED_TOPIC_NAME))
-    cage_min_s_red = int(config_cage.get('VISION', CAGE_MIN_SAT_RED_TOPIC_NAME))
-    cage_min_v_red = int(config_cage.get('VISION', CAGE_MIN_VAL_RED_TOPIC_NAME))
-    cage_max_h_red = int(config_cage.get('VISION', CAGE_MAX_HUE_RED_TOPIC_NAME))
-    cage_max_s_red = int(config_cage.get('VISION', CAGE_MAX_SAT_RED_TOPIC_NAME))
-    cage_max_v_red = int(config_cage.get('VISION', CAGE_MAX_VAL_RED_TOPIC_NAME))
+    fuel_min_h = int(config_fuel.get('VISION', FUEL_MIN_HUE_TOPIC_NAME))
+    fuel_min_s = int(config_fuel.get('VISION', FUEL_MIN_SAT_TOPIC_NAME))
+    fuel_min_v = int(config_fuel.get('VISION', FUEL_MIN_VAL_TOPIC_NAME))
+    fuel_max_h = int(config_fuel.get('VISION', FUEL_MAX_HUE_TOPIC_NAME))
+    fuel_max_s = int(config_fuel.get('VISION', FUEL_MAX_SAT_TOPIC_NAME))
+    fuel_max_v = int(config_fuel.get('VISION', FUEL_MAX_VAL_TOPIC_NAME))
+    fuel_min_area = int(config_fuel.get('VISION', FUEL_MIN_AREA_TOPIC_NAME))
+    fuel_max_area = 1000
 
-    cage_min_h_blue = int(config_cage.get('VISION', CAGE_MIN_HUE_BLUE_TOPIC_NAME))
-    cage_min_s_blue = int(config_cage.get('VISION', CAGE_MIN_SAT_BLUE_TOPIC_NAME))
-    cage_min_v_blue = int(config_cage.get('VISION', CAGE_MIN_VAL_BLUE_TOPIC_NAME))
-    cage_max_h_blue = int(config_cage.get('VISION', CAGE_MAX_HUE_BLUE_TOPIC_NAME))
-    cage_max_s_blue = int(config_cage.get('VISION', CAGE_MAX_SAT_BLUE_TOPIC_NAME))
-    cage_max_v_blue = int(config_cage.get('VISION', CAGE_MAX_VAL_BLUE_TOPIC_NAME))
+    #set up pose estimation
+    ''' old way for camera calibration
+    calib_data_path = "calib_data"
+    calib_data = np.load(f"{calib_data_path}/{CAMERA_CAL_FILE_NAME}")
+    camMatrix = calib_data["camMatrix"]
+    distCoeffs = calib_data["distCoef"]
+    '''
+    # new way for camera calibration
+    with open('cameraMatrix.pkl', 'rb') as c:
+        camMatrix = pickle.load(c)
+    with open('dist.pkl', 'rb') as d:
+        distCoeffs = pickle.load(d)
 
-    #nice
+    #camMatrix[0][0] = Focal point distance x (fx) 
+    #camMatrix[1][1] = Focal point distance y (fy) 
+    #camMatrix[0][2] = camera center  (cx) 
+    #camMatrix[1][2] = camera center  (cy) 
+
+    apriltag_est_config = robotpy_apriltag.AprilTagPoseEstimator.Config(0.153, camMatrix[0][0], camMatrix[1][1], camMatrix[0][2], camMatrix[1][2])
+    apriltag_est = robotpy_apriltag.AprilTagPoseEstimator(apriltag_est_config)
+    rVector = np.zeros((3,1))
+    tVector = np.zeros((3,1))
+    
     #load camera settings set from web console
     with open('/boot/frc.json') as f:
         web_settings = json.load(f)
@@ -1109,35 +1014,24 @@ def main():
     picam2 = Picamera2()
     server = FrameServer(picam2)
 
-    if USE_CAGE_CAM_STREAM is True:
-        # load stream camera settings and start steaming
-        streamreadConfig()
-
-        # start stream camera
-        # work around wpilibsuite/allwpilib#5055
-        CameraServer.setSize(CameraServer.kSize160x120)
-        for config in streamcameraConfigs:
-            streamcameras.append(streamstartCamera(config))
-
-        # start switched camera (optional)
-        #for config in streamswitchedCameraConfigs:
-        #    streamstartSwitchedCamera(config)
-            
     print(f'{len(picam2.sensor_modes)} camera image sensor modes')
-    print(picam2.sensor_modes[0])
+    pprint(picam2.sensor_modes[0])
     #picam2_config = picam2.create_preview_configuration(main={"size" : (w,h)})
     #picam2_config = picam2.create_preview_configuration(main={"size" : (w,h)}, raw=sensor_modes[0])
     picam2_config = picam2.create_video_configuration( {'size': (w, h), 'format' : 'RGB888'})
     
+    # When the camera bolt hole is facing up, the camera is upside down
+    # When the camera bolt hole is facing down, the camera is mounted right side up.
+    # If flip needed, flip every image using cv2.flip(img,-1) or tell Picamera2 at config time (now) to flip every image it gives
+    #img = cv2.flip(img, -1) 
+    #picam2_config['transform'] = libcamera.Transform(hflip=1, vflip=1)
+    #picam2.configure(picam2_config)
     picam2.set_controls({"FrameRate": fps})
-    game_piece = get_type()
-    if game_piece == "coral":
-        picam2.set_controls({'Brightness': float(config_coral.get('VISION', CORAL_BRIGHTNESS_TOPIC_NAME))})
-        picam2.set_controls({'Contrast': float(config_coral.get('VISION', CORAL_CONTRAST_TOPIC_NAME))})
-
-    elif game_piece == "cage":
-        picam2.set_controls({'Brightness': float(config_cage.get('VISION', CAGE_BRIGHTNESS_TOPIC_NAME))})
-        picam2.set_controls({'Contrast': float(config_cage.get('VISION', CAGE_CONTRAST_TOPIC_NAME))})
+    
+    # added @ Troy 3-23
+    picam2.set_controls({'Brightness': float(config_gen.get('GENERAL', 'Brightness'))})
+    picam2.set_controls({'Contrast': float(config_gen.get('GENERAL', 'Contrast'))})
+    # end added @ Troy 3-23
 
     # AeFlickerPeriod from https://datasheets.raspberrypi.com/camera/picamera2-manual.pdf
     # The period of the lighting cycle in microseconds. For example, for 50Hz mains
@@ -1160,10 +1054,14 @@ def main():
     #picam2.set_controls({"ExposureTime": 25000, "AnalogueGain": 2.0})
 
     # (optional) Setup a CvSource. This will send images back to the Dashboard
-   
-    outputStreamCoral = CameraServer.putVideo("coral image", cam_config['width'], cam_config['height'])
-    outputStreamCage = CameraServer.putVideo("cage image", cam_config['width'], cam_config['height'])
-    outputMask = CameraServer.putVideo("mask image", cam_config['width'], cam_config['height'])
+    if vision_type == 'tag':
+        outputStreamTag = CameraServer.putVideo("tag image", cam_config['width'], cam_config['height'])
+    else:
+        outputStreamFuel = CameraServer.putVideo("fuel image", cam_config['width'], cam_config['height'])
+        outputMask = CameraServer.putVideo("mask image", cam_config['width'], cam_config['height'])
+
+    # Allocating new images is very expensive, always try to preallocate
+    #img = np.zeros(shape=(cam_config['height'], cam_config['width'], 3), dtype=np.uint8)
 
     image_num = 0
     image_counter = 0
@@ -1171,132 +1069,173 @@ def main():
     fps_av = 0
     fps_av_min = 24601
     fps_av_max = -1
+    tag_image_counter = 0
+    tag_image_time_av_total = 0
+    tag_fps_av = 0
+    tag_fps_av_min = 24601
+    tag_fps_av_max = -1
     seconds = 0
     current_seconds = 0
     prev_seconds = 0
     temp_sec = 30
-
-    coral_brightness = float(config_coral.get('VISION', CORAL_BRIGHTNESS_TOPIC_NAME))
-    coral_contrast = float(config_coral.get('VISION', CORAL_CONTRAST_TOPIC_NAME))
-    coral_ae_mode = bool(config_coral.get('VISION', CORAL_AE_TOPIC_NAME))
-
-    cage_brightness = float(config_cage.get('VISION', CAGE_BRIGHTNESS_TOPIC_NAME))
-    cage_contrast = float(config_cage.get('VISION', CAGE_CONTRAST_TOPIC_NAME))
-    cage_ae_mode = bool(config_cage.get('VISION', CAGE_AE_TOPIC_NAME))
+    tag_recording = False
     
+    tag_last_brightness = None
+    tag_last_contrast = None
+    tag_last_ae_mode = None
+    fuel_last_brightness = None
+    fuel_last_contrast = None
+    fuel_last_ae_mode = None
+
+    brightness = BRIGHTNESS_DEFAULT
+    contrast = CONTRAST_DEFAULT
+    ae_mode = AE_DEFAULT
+    exp_time = EXPOSURE_DEFAULT
     cam_settings_changed = False
 
-    CORAL_Y_OFFSET = int(config_coral.get('VISION', CORAL_Y_OFFSET_TOPIC_NAME))
-    CAGE_Y_OFFSET = int(config_cage.get('VISION', CAGE_Y_OFFSET_TOPIC_NAME))
-    CORAL_Y_CROP = int(config_coral.get('VISION', CORAL_Y_CROP_TOPIC_NAME))
-    CAGE_Y_CROP = int(config_cage.get('VISION', CAGE_Y_CROP_TOPIC_NAME))
+    amount_view_type = FUEL_AMOUNT_DETECT_MODE_DEFAULT
 
-    pose_data_bytes_ntt = None
-    pose_data_string_header_ntt = None
-    distance_ntt = None
-    angle_ntt = None
-    output_stream_image = None
-    output_stream_mask = None
-    record_data_ntt = None
-    record_data_file_name = None
-    lookup_distance = None
-    lookup_angle = None
-    
+
+    FUEL_Y_OFFSET = int(config_gen.get('GENERAL', 'Y Offset'))
+
     while True:
 
         rio_time = rio_time_ntt.get()
         current_seconds = time.time()
         time_check = False
-        
-        db_coral = debug_coral_ntt.get()
-        db_cage =  debug_cage_ntt.get()
-
         if current_seconds - prev_seconds >= UPTIME_UPDATE_INTERVAL:
             prev_seconds = current_seconds
             seconds = seconds + 1
             temp_sec = temp_sec + 1
-        
-            uptime_ntt.set(seconds)
+
+            if vision_type == 'tag':
+
+                db_t = debug_tag_ntt.get()
+
+                if db_t == True:
+
+                    if tag_last_brightness != tag_brightness_ntt.get():
+                        brightness = float(tag_brightness_ntt.get())
+                        picam2.set_controls({'Brightness': brightness})
+                        config_gen.set('GENERAL', 'Brightness', str(brightness))
+                        tag_last_brightness = brightness
+                        cam_settings_changed = True
+
+                    if tag_last_contrast != tag_contrast_ntt.get():
+                        contrast = float(tag_contrast_ntt.get())
+                        picam2.set_controls({'Contrast': contrast})
+                        config_gen.set('GENERAL', 'Contrast', str(contrast))
+                        tag_last_contrast = contrast
+                        cam_settings_changed = True
+
+                    if tag_last_ae_mode != tag_ae_ntt.get():
+                        ae_mode = bool(tag_ae_ntt.get())
+                        picam2.set_controls({'AeEnable': bool(ae_mode)})
+                        config_gen.set('GENERAL', 'AeEnable', str(ae_mode))
+                        tag_last_ae_mode = ae_mode
+                        cam_settings_changed = True
+
+                    if tag_last_ae_mode == False:
+                        exp_time = int(round(tag_exposure_ntt.get()))
+                        picam2.set_controls({"ExposureTime": \
+                            exp_time, "AnalogueGain": 1.0})
+                        config_gen.set('GENERAL', 'Manual Exposure Time', str(exp_time))
+                        cam_settings_changed = True
+
+                    if cam_settings_changed == True and tag_camera_safefile_ntt.get() == True:
+                        file_write_gen(brightness, contrast, ae_mode, exp_time, FUEL_Y_OFFSET)
+                        tag_camera_safefile_ntt.set(False)
+                        cam_settings_changed = False
+
+            else:
+
+                db_n = debug_fuel_ntt.get()
+
+                if db_n == True:
+                    
+                    if fuel_camera_refresh_nt_ntt.get() == True:
+                        file_read_fuel(config_fuel, configfilefail_ntt)
+                        nt_update_fuel(config_fuel, fuelconfigfile_ntt, \
+                            fuel_min_h_ntt, fuel_min_s_ntt, fuel_min_v_ntt, fuel_max_h_ntt, fuel_max_s_ntt, fuel_max_v_ntt, \
+                            fuel_min_area_ntt)
+                        file_read_gen(config_gen, configfilefail_ntt)
+                        nt_update_gen(vision_type, config_gen, tag_brightness_ntt, tag_contrast_ntt, tag_ae_ntt, tag_exposure_ntt, \
+                            fuel_brightness_ntt, fuel_contrast_ntt, fuel_ae_ntt, fuel_exposure_ntt, gen_fuel_y_offset_ntt)
+                        fuel_camera_refresh_nt_ntt.set(False)
+
+                    if fuel_last_brightness != fuel_brightness_ntt.get():
+                        brightness = float(fuel_brightness_ntt.get())
+                        picam2.set_controls({'Brightness': float(brightness)})
+                        config_gen.set('GENERAL', 'Brightness', str(brightness))
+                        fuel_last_brightness = brightness
+                        cam_settings_changed = True
+
+                    if fuel_last_contrast != fuel_contrast_ntt.get():
+                        contrast = float(fuel_contrast_ntt.get())
+                        picam2.set_controls({'Contrast': float(contrast)})
+                        config_gen.set('GENERAL', 'Contrast', str(contrast))
+                        fuel_last_contrast = contrast
+                        cam_settings_changed = True
+
+                    if fuel_last_ae_mode != fuel_ae_ntt.get():
+                        ae_mode = bool(tag_ae_ntt.get())
+                        picam2.set_controls({'AeEnable': bool(ae_mode)})
+                        config_gen.set('GENERAL', 'AeEnable', str(ae_mode))
+                        fuel_last_ae_mode = ae_mode
+                        cam_settings_changed = True
+
+                    if fuel_last_ae_mode == False:
+                        exp_time = int(round(fuel_exposure_ntt.get(),0))
+                        picam2.set_controls({"ExposureTime": \
+                            exp_time, "AnalogueGain": 1.0})
+                        config_gen.set('GENERAL', 'Manual Exposure Time', str(exp_time))
+                        cam_settings_changed = True
+
+                    if FUEL_Y_OFFSET != gen_fuel_y_offset_ntt.get():
+                        FUEL_Y_OFFSET = int(round(gen_fuel_y_offset_ntt.get(),0))
+                        config_gen.set('GENERAL', 'Y Offset', str(FUEL_Y_OFFSET))
+                        cam_settings_changed = True
+                    
+                    if cam_settings_changed == True and fuel_camera_savefile_ntt.get() == True:
+                        print("saving camera settings")
+                        file_write_gen(brightness, contrast, ae_mode, exp_time, FUEL_Y_OFFSET)
+                        fuel_camera_savefile_ntt.set(False)
+                        cam_settings_changed = False
+                    elif cam_settings_changed == False and fuel_camera_savefile_ntt.get() == True:
+                        print("values unchanged")
+                        fuel_camera_savefile_ntt.set(False)
+
+
+
+            if vision_type == 'tag':
+                tag_uptime_ntt.set(seconds)
+            else:
+                fuel_uptime_ntt.set(seconds)
             time_check = True
 
-            if game_piece == 'coral':
-
-                if db_coral == True:
-
-                    print(f'sec={seconds} corals: ave fps={round(fps_av,0)} fps min={round(fps_av_min,0)} fps max={round(fps_av_max,0)}')
-                        #print(f'CAGE_Y_OFFSET={CAGE_Y_OFFSET}')
-                    
-                    c_b = float(coral_brightness_ntt.get())
-                    if c_b != coral_brightness:
-
-                        picam2.set_controls({'Brightness': float(c_b)})
-                        config_coral.set('VISION', CORAL_BRIGHTNESS_TOPIC_NAME , str(c_b))
-                        coral_brightness = c_b
-
-                    c_c = float(coral_contrast_ntt.get())
-                    if c_c != coral_contrast:
-
-                        picam2.set_controls({'Contrast': float(c_c)})
-                        config_coral.set('VISION', CORAL_CONTRAST_TOPIC_NAME , str(c_c))
-                        coral_contrast = c_c
-
-                    c_ae = bool(coral_ae_ntt.get())
-                    if c_ae != coral_ae_mode:
-                    
-                        picam2.set_controls({'AeEnable': bool(c_ae)})
-                        config_coral.set('VISION', CORAL_AE_TOPIC_NAME , str(c_ae))
-                        coral_ae_mode = c_ae
-
-                        if coral_ae_mode == False:
-                            exp_time = int(round(coral_exposure_ntt.get(),0))
-                            picam2.set_controls({"ExposureTime": \
-                                exp_time, "AnalogueGain": 1.0})
-                            config_coral.set('VISION', CORAL_EXPOSURE_TOPIC_NAME, str(exp_time))
-
+            if vision_type == 'tag':
+                if db_t == True:
+                    print(f'sec={seconds} tags: ave fps={round(tag_fps_av,0)} min fps={round(tag_fps_av_min,0)} max fps={round(tag_fps_av_max,0)}')
                 else:
                     print(f'{seconds}')
-
-            if game_piece == 'cage':
-
-                if db_cage == True:
-                    
-                    print(f'sec={seconds} cages: ave fps={round(fps_av,0)} fps min={round(fps_av_min,0)} fps max={round(fps_av_max,0)}')
-                        #print(f'CAGE_Y_OFFSET={CAGE_Y_OFFSET}')
-
-                    c_b = float(cage_brightness_ntt.get())
-                    if c_b != cage_brightness:
-
-                        picam2.set_controls({'Brightness': float(c_b)})
-                        config_cage.set('VISION', CAGE_BRIGHTNESS_TOPIC_NAME , str(c_b))
-                        cage_brightness = c_b
-
-                    c_c = float(cage_contrast_ntt.get())
-                    if c_c != cage_contrast:
-
-                        picam2.set_controls({'Contrast': float(c_c)})
-                        config_cage.set('VISION', CORAL_CONTRAST_TOPIC_NAME , str(c_c))
-                        cage_contrast = c_c
-
-                    c_ae = bool(cage_ae_ntt.get())
-                    if c_ae != cage_ae_mode:
-                    
-                        picam2.set_controls({'AeEnable': bool(c_ae)})
-                        config_coral.set('VISION', CAGE_AE_TOPIC_NAME , str(c_ae))
-                        cage_ae_mode = c_ae
-
-                        if cage_ae_mode == False:
-                            exp_time = int(round(cage_exposure_ntt.get(),0))
-                            picam2.set_controls({"ExposureTime": \
-                                exp_time, "AnalogueGain": 1.0})
-                            config_cage.set('VISION', CAGE_EXPOSURE_TOPIC_NAME, str(exp_time))
-
+            else:                
+                if db_n == True:
+                    print(f'sec={seconds} fuel: ave fps={round(fps_av,0)} fps min={round(fps_av_min,0)} fps max={round(fps_av_max,0)}')
+                    #print(f'FUEL_Y_OFFSET={FUEL_Y_OFFSET}')
                 else:
-                    print(f'{seconds}')                
-
+                    print(f'{seconds}')
+            
         if temp_sec >= TEMP_UPDATE_INTERVAL:
             with open("/sys/class/thermal/thermal_zone0/temp", 'r') as f:
                 current_temp = int(f.readline()) / 1000 #converting milidegrees C to degrees C
-                temp_coral_ntt.set(current_temp)
+                if vision_type == 'tag':
+                    temp_tag_ntt.set(current_temp)
+                else:
+                    temp_fuel_ntt.set(current_temp)
+                '''
+                temp_ntt.set(int(f.readline()) / 1000) #converting milidegrees C to degrees C
+                temp_sec = 0
+                '''
                  
         t1_time = time.perf_counter()
         #img = picam2.capture_array()
@@ -1305,10 +1244,29 @@ def main():
         #image_time = time.perf_counter() - t1_time
         # When the camera bolt hole is facing up, the camera is upside down
         # When the camera bolt hole is facing down, the camera is mounted right side up.
-        # If flip needed, flip every image using cv2.flip(img,-1) 
+        # If flip needed, flip every image using cv2.flip(img,-1) or tell Picamera2 at config time (now) to flip every image it gives
+        #picam2_config['transform'] = libcamera.Transform(hflip=1, vflip=1)
+        #picam2.configure(picam2_config)
+        #picam2.set_controls({"FrameRate": fps})
         if camera_orientation == True:
             img = cv2.flip(img, -1)
 
+        '''
+        tag_image_counter += 1
+        tag_image_time_av_total += image_time
+        outputStream.putFrame(img)
+
+        if tag_image_counter == FPS_NUM_SAMPLES: 
+            #print("glob")
+            tag_fps_av = 1/(tag_image_time_av_total/tag_image_counter)
+            if tag_fps_av < tag_fps_av_min:
+                tag_fps_av_min = tag_fps_av
+            if tag_fps_av > tag_fps_av_max:
+                tag_fps_av_max = tag_fps_av
+            tag_image_time_av_total = 0
+            tag_image_counter = 0
+        continue 
+        '''
 
         '''
         if frame_time == 0:
@@ -1320,339 +1278,329 @@ def main():
         
         #
         # Insert your image processing logic here!
-          
-        #CORAL!!!
-        if game_piece == 'coral':
-           
-            if db_coral == True:
-                coral_min_h = int(coral_min_h_ntt.get())
-                coral_min_s = int(coral_min_s_ntt.get())
-                coral_min_v = int(coral_min_v_ntt.get())
-                coral_max_h = int(coral_max_h_ntt.get())
-                coral_max_s = int(coral_max_s_ntt.get())
-                coral_max_v = int(coral_max_v_ntt.get())
-                CORAL_Y_OFFSET = int(coral_y_offset_ntt.get())
-                CORAL_Y_CROP = int(coral_crop_y_ntt.get())
 
-                if coral_config_savefile_ntt.get() == True:
-                    file_write_corals(coralconfigfile_ntt.get(), \
-                        coral_min_h_ntt.get(), \
-                        coral_min_s_ntt.get(), \
-                        coral_min_v_ntt.get(), \
-                        coral_max_h_ntt.get(), \
-                        coral_max_s_ntt.get(), \
-                        coral_max_v_ntt.get(), \
-                        coral_contrast_ntt.get(), \
-                        coral_ae_ntt.get(), \
-                        coral_exposure_ntt.get(), \
-                        coral_y_offset_ntt.get(), \
-                        coral_brightness_ntt.get(), \
-                        coral_crop_y_ntt.get())
-                    coral_config_savefile_ntt.set(False)
+        # Tags
+        if vision_type == 'tag':
+            #if tag_enable.get() == True:
 
-            min_h = coral_min_h 
-            min_s = coral_min_s 
-            min_v = coral_min_v 
-            max_h = coral_max_h 
-            max_s = coral_max_s 
-            max_v = coral_max_v 
-            Y_OFFSET = CORAL_Y_OFFSET
-            Y_CROP = CORAL_Y_CROP
-            X_OFFSET = CORAL_X_OFFSET
-            min_area = CORAL_MIN_AREA
-            min_center_y = CORAL_MIN_CENTER_Y
-            max_center_y = CORAL_MAX_CENTER_Y
-            min_aspect_ratio = CORAL_MIN_ASPECT_RATIO
-            max_aspect_ratio = CORAL_MAX_ASPECT_RATIO
-            use_extent = False
-            use_extent_as_perp = False
-            min_distance = CORAL_MIN_DISTANCE
-            max_distance = CORAL_MAX_DISTANCE
-            min_angle = CORAL_MIN_ANGLE
-            max_angle = CORAL_MAX_ANGLE
-            perp = False
-            show_extreme_points = False
-            adjust_distance_and_angle = False
+            dm_list = {'1': [999999, 0], '2': [999999, 0], '3' : [999999, 0], '4' : [999999, 0], '5' : [999999, 0], '6' : [999999, 0], '7' : [999999, 0], '8' : [999999, 0]}
 
-            pose_data_bytes_ntt=coral_pose_data_bytes_ntt
-            pose_data_string_header_ntt = coral_pose_data_string_header_ntt
-            distance_ntt = coral_distance_ntt
-            angle_ntt = coral_angle_ntt
-            output_stream_image = outputStreamCoral
-            output_stream_mask = outputMask
-            record_data_ntt = coral_config_savefile_ntt
-            record_data_file_name = 'coral_data.txt'
-            find_distance = coral_regress_distance
-            find_pixels_per_degree = coral_regress_px_per_deg
-            piece_pose_data_bytes = coral_pose_data_bytes
-            piece_pose_data_bytes_string = coral_pose_data_string
+            # crop the image by y
+            # crop is done by this format
+            # img[y_start:y_end,x_start:x_end]
 
-        elif game_piece == 'cage':
+            # crop from y = 0 to this number
+            crop_top = float(config_tag.get('VISION', TAG_CROP_TOP_TOPIC_NAME))
+            # crop from y = this number to y = max y
+            crop_bottom = float(config_tag.get('VISION', TAG_CROP_BOTTOM_TOPIC_NAME))
+            crop_top = int(round(crop_top,0))
+            crop_bottom = int(round(crop_bottom,0))
 
-            if db_cage == True:
-                cage_min_h_red = int(cage_min_h_red_ntt.get())
-                cage_min_s_red = int(cage_min_s_red_ntt.get())
-                cage_min_v_red = int(cage_min_v_red_ntt.get())
-                cage_max_h_red = int(cage_max_h_red_ntt.get())
-                cage_max_s_red = int(cage_max_s_red_ntt.get())
-                cage_max_v_red = int(cage_max_v_red_ntt.get())
-                cage_min_h_blue = int(cage_min_h_blue_ntt.get())
-                cage_min_s_blue = int(cage_min_s_blue_ntt.get())
-                cage_min_v_blue = int(cage_min_v_blue_ntt.get())
-                cage_max_h_blue = int(cage_max_h_blue_ntt.get())
-                cage_max_s_blue = int(cage_max_s_blue_ntt.get())
-                cage_max_v_blue = int(cage_max_v_blue_ntt.get())
-                CAGE_Y_OFFSET = int(cage_y_offset_ntt.get())
-                CAGE_Y_CROP = int(cage_crop_y_ntt.get())
+            # keep below the top and above the bottom
+            cropped_image = img[crop_top:crop_bottom,0:w-1]
+            
+            ###
+            # convert to RGB for displaying
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            ###
 
-                if cage_config_savefile_ntt.get() == True:
-                    print('check_button_press')
-                    file_write_cages(cageconfigfile_ntt.get(), \
-                        cage_min_h_red_ntt.get(), \
-                        cage_min_s_red_ntt.get(), \
-                        cage_min_v_red_ntt.get(), \
-                        cage_max_h_red_ntt.get(), \
-                        cage_max_s_red_ntt.get(), \
-                        cage_max_v_red_ntt.get(), \
-                        cage_min_h_blue_ntt.get(), \
-                        cage_min_s_blue_ntt.get(), \
-                        cage_min_v_blue_ntt.get(), \
-                        cage_max_h_blue_ntt.get(), \
-                        cage_max_s_blue_ntt.get(), \
-                        cage_max_v_blue_ntt.get(), \
-                        cage_contrast_ntt.get(), \
-                        cage_ae_ntt.get(), \
-                        cage_exposure_ntt.get(), \
-                        cage_y_offset_ntt.get(), \
-                        cage_brightness_ntt.get(), \
-                        cage_crop_y_ntt.get())
-                    cage_config_savefile_ntt.set(False)
+            #print(f'{cropped_image.shape}')
+            # black out above the top and below the bottom for displaying
+            img[0:crop_top,0:w-1] = 0
+            img[crop_bottom:h-1,0:w-1] = 0
+            #print(f'{img.shape}')
 
+            gimg = cv2.cvtColor(cropped_image, cv2.COLOR_BGR2GRAY)
 
-            if is_red_alliance.get() == True:
-                #print("loading red")
-                min_h = cage_min_h_red
-                min_s = cage_min_s_red 
-                min_v = cage_min_v_red 
-                max_h = cage_max_h_red 
-                max_s = cage_max_s_red 
-                max_v = cage_max_v_red
-            else:
-                #print("loading blue")
-                min_h = cage_min_h_blue
-                min_s = cage_min_s_blue 
-                min_v = cage_min_v_blue 
-                max_h = cage_max_h_blue 
-                max_s = cage_max_s_blue 
-                max_v = cage_max_v_blue
+            if db_t == True:
+                detectorConfig.numThreads = int(threads_ntt.get())
+                detectorConfig.quadDecimate = float(quadDecimate_ntt.get())
+                detectorConfig.quadSigma = float(blur_ntt.get())
+                detectorConfig.refineEdges = refineEdges_ntt.get()
+                detectorConfig.decodeSharpening = float(decodeSharpening_ntt.get())
+                detectorConfig.debug = ATDebug_ntt.get()
+                detector.setConfig(detectorConfig)
+                config_tag.set('VISION', DECISION_MARGIN_MIN_TOPIC_NAME, str(decision_margin_min_ntt.get()))
+                config_tag.set('VISION', DECISION_MARGIN_MAX_TOPIC_NAME, str(decision_margin_max_ntt.get()))
+                config_tag.set('VISION', TAG_CROP_TOP_TOPIC_NAME, str(tag_crop_x_ntt.get()))
+                config_tag.set('VISION', TAG_CROP_BOTTOM_TOPIC_NAME, str(tag_crop_y_ntt.get()))
+                config_tag.set('VISION', TAG_ERRORS_TOPIC_NAME, str(tag_corrected_errors_ntt.get()))
 
-            Y_OFFSET = CAGE_Y_OFFSET
-            Y_CROP = CAGE_Y_CROP
-            X_OFFSET = CAGE_X_OFFSET
-            min_area = CAGE_MIN_AREA
-            min_center_y = CAGE_MIN_CENTER_Y
-            max_center_y = CAGE_MAX_CENTER_Y
-            min_aspect_ratio = CAGE_MIN_ASPECT_RATIO
-            max_aspect_ratio = CAGE_MAX_ASPECT_RATIO
-            use_extent = True
-            min_extent = CAGE_MIN_EXTENT
-            max_extent = CAGE_MAX_EXTENT
-            min_distance = CAGE_MIN_DISTANCE
-            max_distance = CAGE_MAX_DISTANCE
-            min_angle = CAGE_MIN_ANGLE
-            max_angle = CAGE_MAX_ANGLE
-            use_extent_as_perp = False
-            perp = False
-            show_extreme_points = False
-            adjust_distance_and_angle = True
-            distance_adjustment = CAGE_DISTANCE_ADJUSTMENT
-            angle_adjustment = CAGE_ANGLE_ADJUSTMENT
+            #d_time = time.perf_counter()
+            detected = detector.detect(gimg)
+            #print(f'tag d = {(time.perf_counter() - d_time):1.3f}')
 
-            pose_data_bytes_ntt=cage_pose_data_bytes_ntt
-            pose_data_string_header_ntt = cage_pose_data_string_header_ntt
-            distance_ntt = cage_distance_ntt
-            angle_ntt = cage_angle_ntt
-            output_stream_image = outputStreamCage
-            output_stream_mask = outputMask
-            record_data_ntt = cage_config_savefile_ntt
-            record_data_file_name = 'cage_data.txt'
-            find_distance = cage_regress_distance # change to the cage version once we have one
-            find_pixels_per_degree = cage_regress_px_per_deg # change to the cage version once we have one
-            piece_pose_data_bytes = cage_pose_data_bytes
-            piece_pose_data_bytes_string = cage_pose_data_string
+            tag_poses = []
+            tags = []
 
-        # even though image capture format is RGB888, images are stored as BGR
-        # for HSV filtering / masking / detecting, convert input image from BGR to HSV
-        # but for displaying the image, convert input image from BGR to RGB
-        original_image = cv2.cvtColor(img.copy(), cv2.COLOR_BGR2RGB)
-        img[0:Y_CROP, 0:w-1] = 0 # crop y axis image using slider user can change
-        img_HSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+            for tag in detected:
+                if tag_check(tag,config_tag) == True:
+                    tag_pose = apriltag_est.estimateHomography(tag)
+                    #print(f'id={tag.getId()} e={tag.getHamming()} DM={int(round(tag.getDecisionMargin()))} x={int(round(tag_pose.translation().X()*39.37))} z={int(round(tag_pose.translation().Z()*39.37))}')
+                    tag_poses.append(tag_pose)
+                    tags.append(tag)
 
-        color_low = np.array([min_h, min_s, min_v])
-        color_high = np.array([max_h, max_s, max_v])
-        img_mask = cv2.inRange(img_HSV, color_low, color_high)
+            if len(tags) > 0:
+                image_num += 1
+                tag_image_counter += 1
+                image_time = time.perf_counter() - t1_time
+                tag_image_time_av_total += image_time
 
-        contours, useless = cv2.findContours(img_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        #sorting the white pixels from largest to smallest
-        contours_sorted = sorted(contours, key=lambda x: cv2.contourArea(x), reverse=True)
+                if tag_image_counter == FPS_NUM_SAMPLES: 
+                    #print("glob")
+                    tag_fps_av = 1/(tag_image_time_av_total/tag_image_counter)
+                    if tag_fps_av < tag_fps_av_min:
+                        tag_fps_av_min = tag_fps_av
+                    if tag_fps_av > tag_fps_av_max:
+                        tag_fps_av_max = tag_fps_av
+                    tag_image_time_av_total = 0
+                    tag_image_counter = 0                    
+                pose_data = pose_data_bytes(image_num, rio_time, image_time, tags, tag_poses)
+                pose_data_bytes_ntt.set(pose_data)
+                NetworkTableInstance.getDefault().flush()
+
+            db_t = debug_tag_ntt.get()
+
+            if db_t == True:
+                if len(tags) > 0:
+                    header, rot_data, trans_data = \
+                        pose_data_string(image_num, rio_time, image_time, tags, tag_poses, \
+                        (tag_detected_id_ntt, tag_detected_dm_ntt, tag_detected_errors_ntt, \
+                        pose_data_x_deg_ntt, pose_data_y_deg_ntt, pose_data_z_deg_ntt, \
+                        pose_data_x_in_ntt, pose_data_y_in_ntt, z_in_ntt))
+                    pose_data_string_header_ntt.set(header)
+                    pose_data_string_data_translation_ntt.set(trans_data)
+                    pose_data_string_data_rotation_ntt.set(rot_data)
+                    img = draw_tags(img, tags, tag_poses, rVector, tVector, camMatrix, distCoeffs, crop_top)
+                outputStreamTag.putFrame(img) # send to dashboard
+                if tag_record_remove_ntt.get() == True:
+                    remove_image_files('/home/pi/tag_images')
+                    tag_record_remove_ntt.set(False)
+                if tag_record_ntt.get() == True:
+                    # the ID's of all tags in images with > 1 tag should be all on the same side
+                    mismatch = False
+                    '''
+                    if len(tags) > 1:
+                        i = None
+                        for t in tags:
+                            i = t
+                            break
+                        id = i.getID()
+                        if id == 5 or id == 6 or id == 7 or id == 8:
+                            blue = True
+                        else:
+                            blue = False
+                        for j in tags:
+                            id = j.getID()
+                            if (blue == True and (id == 1 or id == 2 or id == 3 or id == 4)) or \
+                                (blue == False and (id == 5 or id == 6 or id == 7 or id == 8)):
+                                cv2.imwrite(f'tag_images/ERROR_TAG_{str(rio_time)}.jpg', img)
+                                mismatch = True
+                                break
+                    '''
+                    if mismatch == False:
+                        cv2.imwrite(f'tag_images/tag_{str(rio_time)}.jpg', img)
+                NetworkTableInstance.getDefault().flush()
+                if tag_config_savefile_ntt.get() == True:
+                    print("write tags")
+                    file_write_tags(tagconfigfile_ntt.get(), threads_ntt.get(), \
+                        quadDecimate_ntt.get(), blur_ntt.get(), refineEdges_ntt.get(), \
+                        decodeSharpening_ntt.get(), ATDebug_ntt.get(), \
+                        decision_margin_min_ntt.get(), decision_margin_max_ntt.get(), \
+                        tag_crop_x_ntt.get(), tag_crop_y_ntt.get(), tag_corrected_errors_ntt.get()) 
+                    tag_config_savefile_ntt.set(False)
+
+        #FUEL!!!
+        elif vision_type == 'fuel':
         
-        piece = []
-        piece_contours = []
-        
-        max_contour = None
-        center_y_max = -24
-        area = 1
-   
-        if len(contours_sorted) >= 1:
-            max_contour = contours_sorted[0]
-        if max_contour is not None:
+            #if fuel_enable_ntt.get() == True:
 
-            area = cv2.contourArea(max_contour)
-            if area > min_area:
+            db_n = debug_fuel_ntt.get()
+
+            if db_n == True:
+                fuel_min_h = int(fuel_min_h_ntt.get())
+                fuel_min_s = int(fuel_min_s_ntt.get())
+                fuel_min_v = int(fuel_min_v_ntt.get())
+                fuel_max_h = int(fuel_max_h_ntt.get())
+                fuel_max_s = int(fuel_max_s_ntt.get())
+                fuel_max_v = int(fuel_max_v_ntt.get())
+                fuel_min_area = int(fuel_min_area_ntt.get())
+
+            '''
+            # filter colors in HSV space
+            img_HSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+            '''
+            # even though image capture format is RGB888, images are stored as BGR
+            # for HSV filtering / masking / detecting, convert input image from BGR to HSV
+            # but for displaying the image, convert input image from BGR to RGB
+            original_image = img.copy()
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img_HSV = cv2.cvtColor(original_image, cv2.COLOR_BGR2HSV)
+
+            # only keep pixels with colors that match the range in color_config
+            orange_low = np.array([fuel_min_h, fuel_min_s, fuel_min_v])
+            orange_high = np.array([fuel_max_h, fuel_max_s, fuel_max_v])
+            img_mask = cv2.inRange(img_HSV, orange_low, orange_high)
+            # fuel should appear in the region below the bottom of this region
+            #   img_mask[0:260,0:640] = 0
+            
+            view_types = ["Contour Area View", "Aspect Ratio View", "Inverse BoundingRect Area View"]
+
+            mode_increment = fuel_amount_detect_mode_ntt.get()
+            if mode_increment == True:
+                amount_view_type += 1
+                if amount_view_type > len(view_types) - 1:
+                    amount_view_type = 0
+                print(view_types[amount_view_type])
+                fuel_amount_detect_mode_ntt.set(False)
+            cv2.putText(img, view_types[amount_view_type], (0, 22), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 220), 2) 
+
+            
+            color, useless = cv2.findContours(img_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            #sorting the orange pixels from largest to smallest
+            colorSorted = sorted(color, key=lambda x: cv2.contourArea(x), reverse=True)
+            
+            fuel = []
+            fuel_contours = []
+        
+            max_contour = None
+            center_y_max = -24
+            center_y = -24
+            area = 1
+            maxRatioDiff = 0
+            max_inverse_area = 0
+            
+            for y in colorSorted:
+                r_x,r_y,r_w,r_h = cv2.boundingRect(y)
+                cv2.rectangle(img, (r_x, r_y), (r_x + r_w, r_y + r_h), (0, 0, 0), 2)
+
+                #Checks if contour is a circle
+                circle_aspect_w = r_w / r_h
+                circle_aspect_h = r_h / r_w
+                circle_ratio = max(circle_aspect_w, circle_aspect_h) - min(circle_aspect_w, circle_aspect_h)
+                if circle_ratio < 0.17:
+                    cv2.putText(img, "CIRCLE", (r_x , (round(r_y + (1.5 * r_h)))), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 0, 0), 2) 
+                else:
+                    cv2.putText(img, str(round(circle_ratio, 4)), (r_x , (round(r_y + (1.5 * r_h)))), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 0, 0), 2) 
+
+                if amount_view_type == 0:
+                    #max area
+                    area = cv2.contourArea(y)
+
+                    if area > 300:
+                        r_x,r_y,r_w,r_h = cv2.boundingRect(y)
+                        center_y = r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET
+                        if center_y > center_y_max:
+                            center_y_max = center_y
+                            max_contour = y
+
+
+                elif amount_view_type == 1:
+                    #aspect ratio
+                    aspectW = r_w / r_h
+                    aspectH = r_h / r_w
+                    ratioDiff = max(aspectW, aspectH) - min(aspectW, aspectH)
+                    if ratioDiff >= maxRatioDiff:
+                        max_contour = y
+                        maxRatioDiff = ratioDiff   
+
+
+                elif amount_view_type == 2:
+                    #inverse
+                    contour_area = cv2.contourArea(y)
+                    rect_area = r_h * r_w
+                    inverse_area = rect_area - contour_area
+                    if(inverse_area > max_inverse_area):
+                        max_contour = y
+                        max_inverse_area = inverse_area 
+                          
+
+
+
+                #uncomment the following block to get raw data output for debugging and calibrating distance / angle
+                
+
+
+                #center_x = r_x + int(round(r_w / 2)) + FUEL_X_OFFSET
+                #center_y = r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET
+                #extent = float(area) / (r_w * r_h)
+                #print(f'ar={area:4.1f} ex={extent:1.2f} fuel_x={center_x} fuel_y={center_y}')
+
+
+
+            # at this point, max_contour points to closest shape by vertical y or None if the area of all were too small
+            # now need to determine if this shape is a fuel
+            if max_contour is not None:
+
+                area = cv2.contourArea(max_contour)
 
                 r_x,r_y,r_w,r_h = cv2.boundingRect(max_contour)
-                center_x = r_x + int(round(r_w / 2))
-                center_y = r_y + int(round(r_h / 2))
-                # if adjust_center is True:
-                #     if img_mask[center_y, center_x] > 0:
-                #         while img_mask[center_y, center_x] > 0:
-                #             center_x = center_x  + CAGE_CENTER_OFFSET
-                #         center_x = center_x + CAGE_CENTER_OFFSET
-                center_x += X_OFFSET
-                center_y += Y_OFFSET
-                extent = float(area) / (r_w * r_h)
-                #print(f'ar={area:4.1f} ex={extent:1.2f} coral_x={center_x} coral_y={center_y}')
-                              
-        # at this point, max_contour points to closest shape by area or None if the area of all were too small
-        # now need to determine if this shape is a coral
-        if max_contour is not None:
+                center_x = r_x + int(round(r_w / 2)) + FUEL_X_OFFSET
+                center_y = r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET
 
-            area = cv2.contourArea(max_contour)
+                if (center_y > 17  and center_y < 240*2):
 
-            r_x,r_y,r_w,r_h = cv2.boundingRect(max_contour)
-            center_x = r_x + int(round(r_w / 2)) + X_OFFSET
-            center_y = r_y + int(round(r_h / 2)) + Y_OFFSET
-            #print(f'center_x = {center_x} center_y = {center_y}')
-            
-            if (center_y > min_center_y  and center_y < 240*2):
-
-                if (center_y > CAGE_CENTER_Y_CLOSE): # at really close, can't see the bottom, aspect ratio goes way up 
-                    max_extent = CAGE_MAX_EXTENT_CLOSE
-                    min_extent = CAGE_MIN_EXTENT_CLOSE
-                    max_aspect_ratio = CAGE_MAX_AR_CLOSE
-                # else:
-                #     extent_min = 0.25
-
-                #Extent is the ratio of contour area to bounding rectangle area.
-                extent = float(area) / (r_w * r_h)
-
-
-                aspect_ratio = (r_w/r_h)
-                #print(f'aspect ratio = {aspect_ratio}')
-                
-                #print(f'AR={aspect_ratio:4.1f} area={area:4.1f} ex={extent:1.2f} x_pixel={center_x}, y_pixel={center_y}')
-
-                #extent goes way down when we get real close
-                if (aspect_ratio > min_aspect_ratio and aspect_ratio < max_aspect_ratio and use_extent is True and \
-                    extent > min_extent and extent < max_extent):
-
-                    print(f'AR={aspect_ratio:4.1f} area={area:4.1f} ex={extent:1.2f} x_pixel={center_x}, y_pixel={center_y}')
-
-                # won't see full game piece this close, so y value for this distance is a bit off so force it to 0
-                    if center_y >= max_center_y: 
-                        distance = 0
+                    if (center_y > 240*2): # at really close, can't see the bottom, aspect ratio goes way up 
+                        extent_min = 0.25
                     else:
-                        distance = find_distance(center_y) # get distance (inches) using y location subtracted by given value to account for bumpers
-                    
-                    rect = cv2.minAreaRect(max_contour)
-                    box = cv2.boxPoints(rect)
-                    box = np.int0(box)
-                    angle = 0
-                    rot = 0
+                        extent_min = 0.25
 
-                    angle = ((center_x - w/2) * (1/find_pixels_per_degree(distance)))
+                    #Extent is the ratio of contour area to bounding rectangle area.
+                    extent = float(area) / (r_w * r_h)
 
-                    if use_extent_as_perp is True:
-                    
-                        if extent > CAGE_MIN_EXTENT_PERP and extent < CAGE_MAX_EXTENT_PERP:
-                            perp = True
+                    #extent goes way down when we get real close
+                    if (extent > extent_min and extent < 1.0):
+
+                        if center_y >= 390: # don't see a full fuel this close, so y value for this distance is a bit off so force it to 0
+                            distance = 0
                         else:
-                            perp = False
-                    else:
-                        rot = rect[2]
-
-                    # rect[2] is float angle in degrees
-                    # print(f'distance={distance:4.1f}, y distance={center_y}, area={area:3.3f}, aspect ratio={aspect_ratio:3.3f}, angle = {(90-angle):3.3f}')
-                    #distance=0
+                            distance = fuel_regress_distance(center_y) # get distance (inches) using y location
+                        px_per_deg = fuel_regress_px_per_deg(distance) # get pixel per degree
+                        angle = (1 / px_per_deg) * (center_x - w/2)
+                        if (distance >= 0 and distance < 360) and (angle >= -70 and angle < 70): # sanity check'''
                     
-                    if (distance >= min_distance and distance < max_distance) and (angle >= min_angle and angle < max_angle): # sanity check'''
-                        
-                        if adjust_distance_and_angle is True:
+                            image_num += 1
+                            image_counter += 1
+                            image_time = time.perf_counter() - t1_time
+                            image_time_av_total += image_time
 
-                            if img_mask[center_y,center_x] > 0:
-                                
-                                print("corrected")
-                                distance += distance_adjustment
-                                if angle > 0:
-                                    angle += angle_adjustment
-                                else:
-                                    angle += (-1) * angle_adjustment
+                            if image_counter == FPS_NUM_SAMPLES:
+                                fps_av = 1/(image_time_av_total/image_counter)
+                                if fps_av < fps_av_min:
+                                    fps_av_min = fps_av
+                                if fps_av > fps_av_max:
+                                    fps_av_max = fps_av
+                                image_time_av_total = 0
+                                image_counter = 0
 
-                        image_num += 1
-                        image_counter += 1
-                        image_time = time.perf_counter() - t1_time
-                        image_time_av_total += image_time
+                            pose_data = piece_pose_data_bytes(image_num, rio_time, image_time, 3, distance, angle)
+                            fuel_pose_data_bytes_ntt.set(pose_data)
+                            NetworkTableInstance.getDefault().flush()
 
-                        if image_counter == FPS_NUM_SAMPLES:
-                            fps_av = 1/(image_time_av_total/image_counter)
-                            if fps_av < fps_av_min:
-                                fps_av_min = fps_av
-                            if fps_av > fps_av_max:
-                                fps_av_max = fps_av
-                            image_time_av_total = 0
-                            image_counter = 0
+                            if db_n == True:
+                                txt = piece_pose_data_string(image_num, rio_time, image_time, distance, angle)
+                                fuel_pose_data_string_header_ntt.set(txt)
+                                fuel_distance_ntt.set(round(distance,2))
+                                fuel_angle_ntt.set(round(angle,2))                       
+                                cv2.circle(img, (center_x, center_y), 6, (255,0,255), -1)
+                                cv2.drawContours(img, [max_contour], 0, (200,0,0), 4)
+                                fuel_config_save(fuelConfigSave)
+                                outputStreamFuel.putFrame(img) # send to dashboard
+                                outputMask.putFrame(img_mask) # send to dashboard
+                                if fuel_record_data_ntt.get() == True:
+                                    fuel_data = f'{area:4.1f},{extent:2.1f},{center_x},{center_y},{distance:3.1f},{angle:2.1f}'
+                                    with open('fuel_data.txt', 'a') as f:
+                                        f.write(fuel_data)
+                                        f.write('\n')
+                                    fuel_record_data_ntt.set(False)
+                                continue
+            if db_n == True:
+                fuel_config_save(fuelConfigSave)
+                outputStreamFuel.putFrame(img) # send to dashboard
+                outputMask.putFrame(img_mask) # send to dashboard
 
-                        if game_piece == 'cage':
-                            pose_data = piece_pose_data_bytes(image_num, rio_time, image_time, 3, distance, angle, perp)
-                        else:
-                            pose_data = piece_pose_data_bytes(image_num, rio_time, image_time, 3, distance, angle, rot)
-
-                        pose_data_bytes_ntt.set(pose_data)
-                        NetworkTableInstance.getDefault().flush()
-
-                        if db_coral or db_cage:
-                           
-                            if game_piece == 'cage':
-                                txt = piece_pose_data_bytes_string(image_num, rio_time, image_time, distance, angle, perp)
-                            else:
-                                txt = piece_pose_data_bytes_string(image_num, rio_time, image_time, distance, angle, rot)
-
-                            pose_data_string_header_ntt.set(txt)
-                            distance_ntt.set(round(distance,2))
-                            angle_ntt.set(round(angle,2))
-                            perp_ntt.set(perp)
-                            leftmost = tuple(max_contour[max_contour[:,:,0].argmin()][0])
-                            rightmost = tuple(max_contour[max_contour[:,:,0].argmax()][0])
-                            topmost = tuple(max_contour[max_contour[:,:,1].argmin()][0])
-                            bottommost = tuple(max_contour[max_contour[:,:,1].argmax()][0])
-                            if show_extreme_points is True:           
-                                cv2.circle(original_image, (leftmost), 12, (200,0,0), -1)
-                                cv2.circle(original_image, (rightmost), 12, (200,0,0), -1)
-                                cv2.circle(original_image, (topmost), 12, (200,0,0), -1)
-                                cv2.circle(original_image, (bottommost), 12, (200,0,0), -1)
-                            cv2.circle(original_image, (center_x, center_y), 12, (200,200,0), -1)
-                            cv2.drawContours(original_image, [box], 0, (0,200,0), 4)
-                            output_stream_image.putFrame(original_image) # send to dashboard
-                            output_stream_mask.putFrame(img_mask) # send to dashboard
-                            if record_data_ntt.get() == True:
-                                file_data = f'{area:4.1f},{extent:2.1f},{center_x},{center_y},{distance:3.1f},{angle:2.1f}'
-                                with open(record_data_file_name, 'a') as f:
-                                    f.write(file_data)
-                                    f.write('\n')
-                                record_data_ntt.set(False)
-                            continue
-
-        output_stream_image.putFrame(original_image) # send to dashboard
-        output_stream_mask.putFrame(img_mask) # send to dashboard            
+                    
+        else:
+            continue
 
 main()

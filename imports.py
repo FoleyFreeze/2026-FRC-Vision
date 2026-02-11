@@ -21,8 +21,7 @@ import threading
 from pprint import *
 import sys
 import pickle
-from cscore import VideoSource, UsbCamera, MjpegServer
-from ntcore import EventFlags
+
 
 
 
