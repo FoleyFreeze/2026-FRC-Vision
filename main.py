@@ -1179,14 +1179,21 @@ def main():
                 r_x,r_y,r_w,r_h = cv2.boundingRect(y)
                 cv2.rectangle(img, (r_x, r_y), (r_x + r_w, r_y + r_h), (0, 0, 0), 2)
 
-                #Checks if contour is a circle
-                circle_aspect_w = r_w / r_h
-                circle_aspect_h = r_h / r_w
-                circle_ratio = max(circle_aspect_w, circle_aspect_h) - min(circle_aspect_w, circle_aspect_h)
-                if circle_ratio < 0.17:
-                    cv2.putText(img, "CIRCLE", (r_x , (round(r_y + (1.5 * r_h)))), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 0, 0), 2) 
-                else:
-                    cv2.putText(img, str(round(circle_ratio, 4)), (r_x , (round(r_y + (1.5 * r_h)))), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 0, 0), 2) 
+                min_circle_area = CIRCLE_AREA_MIN
+                perim = cv2.arcLength(y,True)
+                approx = cv2.approxPolyDP(y, 0.02 * perim ,True)
+                circle_area = cv2.contourArea(approx)
+                
+                if (len(approx) > 4) and (len(approx) < 9) and circle_area > min_circle_area:
+                    circle_aspect_w = r_w / r_h
+                    circle_aspect_h = r_h / r_w
+                    circle_ratio = max(circle_aspect_w, circle_aspect_h) - min(circle_aspect_w, circle_aspect_h)
+                    if circle_ratio < 0.17:
+                        cv2.putText(img, "CIRCLE", (r_x , (round(r_y + (1.5 * r_h)))), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 0, 0), 2) 
+                    else:
+                        cv2.putText(img, str(round(circle_ratio, 4)), (r_x , (round(r_y + (1.5 * r_h)))), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 0, 0), 2) 
+
+                
 
                 if amount_view_type == 0:
                     #max area
