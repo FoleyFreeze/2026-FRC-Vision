@@ -339,6 +339,24 @@ def fuel_regress_px_per_deg(x):
         t *= x
     return r
 
+def fuel_regress_area(area):
+    terms = [
+    -2.2215943304877816e+005,
+    1.0445007271577696e+005,
+    -1.5889094393854761e+004,
+    7.8955751704472561e+002
+
+
+
+    ]   
+
+    t = 1
+    r = 0
+    for c in terms:
+        r += c * t
+        t *= area
+    return r
+
 def pose_data_string(sequence_num, rio_time, time, tags, tag_poses, nt_objects):
     string_header = ""
     string_header = f'num={sequence_num} t_rio={rio_time:1.3f} t_img={time:1.3f} len={len(tags)}'
@@ -396,9 +414,11 @@ def pose_data_string(sequence_num, rio_time, time, tags, tag_poses, nt_objects):
 
     return string_header, string_data_rot, string_data_t
 
-def piece_pose_data_string(sequence_num, rio_time, time, dist, angle):
-    string_header = f'num={sequence_num} t_rio={rio_time:1.3f} t_img={time:1.3f} z_in={dist:3.1f} y_deg={angle:3.1f}'
-    
+def piece_pose_data_string(sequence_num, rio_time, time, data):
+    string_header = f'num={sequence_num} t_rio={rio_time:1.3f} t_img={time:1.3f} objs={len(data)} '
+    for i in range(len(data)):
+        string_header += f'dist={data[i].distance:3.2f} angl={data[i].angle:3.2f} orient={data[i].orientation.name} amount={data[i].amount:3d}    '
+
     return string_header
 
 
@@ -774,11 +794,13 @@ def pose_data_bytes(sequence_num, rio_time, image_time, tags, tag_poses):
         tag_pose += 1
     return byte_array
 
-def piece_pose_data_bytes(sequence_num, rio_time, image_time, type, dist, angle):
+def piece_pose_data_bytes(sequence_num, rio_time, image_time, data):
     byte_array = bytearray()
-    # start the array with sequence number, the RIO's time, image time, and tag type
-    byte_array += struct.pack(">LffBB", sequence_num, rio_time, image_time, type, 1)
-    byte_array += struct.pack(">ff", angle, dist) 
+    # start the array with sequence number, the RIO's time, image time
+    byte_array += struct.pack(">LffB", sequence_num, rio_time, image_time, len(data))
+    for i in range(len(data)):
+        byte_array += struct.pack("ffBH", data[i].distance, data[i].angle, data[i].orientation.value, data[i].amount) 
+
     return byte_array
 
 def remove_image_files(path):
@@ -812,6 +834,19 @@ def fuel_config_save(config):
             config.maxV.get(), \
             config.minA.get())
         config.save.set(False)
+
+class orientation(Enum):
+    VERTICAL = 1
+    HORIZONTAL = 2
+    SQUARE = 3
+    NONE = 4
+
+class Fuel_Data_Class:
+    def __init__(self, distance, angle, orientation, amount):
+        self.distance = distance
+        self.angle = angle
+        self.orientation = orientation
+        self.amount = amount
 
 
 def main():
@@ -883,9 +918,11 @@ def main():
     tag_record_remove_ntt = NTGetBoolean(ntinst.getBooleanTopic(TAG_RECORD_REMOVE_TOPIC_NAME), False, False, False)
     fuel_record_data_ntt = NTGetBoolean(ntinst.getBooleanTopic(FUEL_RECORD_DATA_TOPIC_NAME), False, False, False)
     decision_margin_max_ntt = NTGetDouble(ntinst.getDoubleTopic(DECISION_MARGIN_MAX_TOPIC_NAME), DECISION_MARGIN_DEFAULT, DECISION_MARGIN_DEFAULT, DECISION_MARGIN_DEFAULT)
+    fuel_area_ntt = NTGetDouble(ntinst.getDoubleTopic("/Vision/Fuel Area"), 0.0, 0.0, 0.0)
     fuel_distance_ntt = NTGetDouble(ntinst.getDoubleTopic("/Vision/Fuel Distance"), 0.0, 0.0, 0.0)
     fuel_y_val_ntt = NTGetDouble(ntinst.getDoubleTopic("/Vision/Fuel Y Val"), 0.0, 0.0, 0.0)
     fuel_x_val_ntt = NTGetDouble(ntinst.getDoubleTopic("/Vision/Fuel X Val"), 0.0, 0.0, 0.0)
+    fuel_orientation = NTGetString(ntinst.getStringTopic("/Vision/Fuel Orient"), "", "", "")
     tag_crop_x_ntt = NTGetDouble(ntinst.getDoubleTopic(TAG_CROP_TOP_TOPIC_NAME), TAG_CROP_TOP_DEFAULT, TAG_CROP_TOP_DEFAULT, TAG_CROP_TOP_DEFAULT)
     tag_crop_y_ntt = NTGetDouble(ntinst.getDoubleTopic(TAG_CROP_BOTTOM_TOPIC_NAME), TAG_CROP_BOTTOM_DEFAULT, TAG_CROP_BOTTOM_DEFAULT, TAG_CROP_BOTTOM_DEFAULT)
     tag_corrected_errors_ntt = NTGetDouble(ntinst.getDoubleTopic(TAG_ERRORS_TOPIC_NAME), TAG_ERRORS_DEFAULT, TAG_ERRORS_DEFAULT, TAG_ERRORS_DEFAULT)
@@ -1439,13 +1476,13 @@ def main():
             img_HSV = cv2.cvtColor(original_image, cv2.COLOR_BGR2HSV)
 
             # only keep pixels with colors that match the range in color_config
-            orange_low = np.array([fuel_min_h, fuel_min_s, fuel_min_v])
-            orange_high = np.array([fuel_max_h, fuel_max_s, fuel_max_v])
-            img_mask = cv2.inRange(img_HSV, orange_low, orange_high)
+            color_low = np.array([fuel_min_h, fuel_min_s, fuel_min_v])
+            color_high = np.array([fuel_max_h, fuel_max_s, fuel_max_v])
+            img_mask = cv2.inRange(img_HSV, color_low, color_high)
             # fuel should appear in the region below the bottom of this region
             #   img_mask[0:260,0:640] = 0
             
-            view_types = ["Contour Area View", "Aspect Ratio View", "Inverse BoundingRect Area View"]
+            view_types = ["Maximum Y View", "Aspect Ratio View", "Inverse BoundingRect Area View"]
 
             #Fuel amount dectect mode button
             mode_increment = fuel_amount_detect_mode_ntt.get()
@@ -1471,143 +1508,161 @@ def main():
             area = 1
             maxRatioDiff = 0
             max_inverse_area = 0
-            
+            fuel_data = []
+            orient = orientation.NONE
             for y in colorSorted:
-
+                
                 area = cv2.contourArea(y)
                 if area > fuel_min_area:
 
                     r_x,r_y,r_w,r_h = cv2.boundingRect(y)
-                    cv2.rectangle(img, (r_x, r_y), (r_x + r_w, r_y + r_h), (0, 0, 0), 2)
 
                     min_circle_area = CIRCLE_AREA_MIN
                     perim = cv2.arcLength(y,True)
                     approx = cv2.approxPolyDP(y, 0.02 * perim ,True)
                     circle_area = cv2.contourArea(approx)
                     
-                    if (len(approx) > 4) and (len(approx) < 9) and circle_area > min_circle_area:
-                        circle_aspect_w = r_w / r_h
+                    #circle detection
+                    circle_aspect_w = r_w / r_h
+                    if (len(approx) >= 8) and circle_area > min_circle_area:
+                        cv2.rectangle(img, (r_x, r_y), (r_x + r_w, r_y + r_h), (0, 0, 0), 2)                        
                         circle_aspect_h = r_h / r_w
                         circle_ratio = max(circle_aspect_w, circle_aspect_h) - min(circle_aspect_w, circle_aspect_h)
                         if circle_ratio < 0.17:
-                            cv2.putText(img, "CIRCLE", (r_x , (round(r_y + (1.5 * r_h)))), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 0, 0), 2) 
+                            cv2.putText(img, "1 FUEL", (r_x , (round(r_y + (1.5 * r_h)))), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 0, 0), 2) 
+                            orient = orientation.SQUARE
                         else:
-                            cv2.putText(img, str(round(circle_ratio, 4)), (r_x , (round(r_y + (1.5 * r_h)))), cv2.FONT_HERSHEY_SIMPLEX, 0.45, (255, 0, 0), 2) 
+                            if circle_aspect_w > 1:
+                                orient = orientation.HORIZONTAL
+                            else:
+                                orient = orientation.VERTICAL
+                        
+                        max_contour = y
+
+                        ''' if amount_view_type == 0:
+                            #max y
+                            center_y = r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET
+                            if center_y > center_y_max:
+                                center_y_max = center_y
+                                max_contour = y
 
 
-
-                    if amount_view_type == 0:
-                        #max area
-                        r_x,r_y,r_w,r_h = cv2.boundingRect(y)
-                        center_y = r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET
-                        if center_y > center_y_max:
-                            center_y_max = center_y
-                            max_contour = y
-
-
-                    elif amount_view_type == 1:
-                        #aspect ratio
-                        aspectW = r_w / r_h
-                        aspectH = r_h / r_w
-                        ratioDiff = max(aspectW, aspectH) - min(aspectW, aspectH)
-                        if ratioDiff >= maxRatioDiff:
-                            max_contour = y
-                            maxRatioDiff = ratioDiff   
+                        elif amount_view_type == 1:
+                            #aspect ratio
+                            aspectW = r_w / r_h
+                            aspectH = r_h / r_w
+                            ratioDiff = max(aspectW, aspectH) - min(aspectW, aspectH)
+                            if ratioDiff >= maxRatioDiff:
+                                max_contour = y
+                                maxRatioDiff = ratioDiff   
 
 
-                    elif amount_view_type == 2:
-                        #inverse
-                        contour_area = cv2.contourArea(y)
-                        rect_area = r_h * r_w
-                        inverse_area = rect_area - contour_area
-                        if(inverse_area > max_inverse_area):
-                            max_contour = y
-                            max_inverse_area = inverse_area 
+                        elif amount_view_type == 2:
+                            #inverse
+                            contour_area = cv2.contourArea(y)
+                            rect_area = r_h * r_w
+                            inverse_area = rect_area - contour_area
+                            if(inverse_area > max_inverse_area):
+                                max_contour = y
+                                max_inverse_area = inverse_area '''
                             
 
 
 
-                #uncomment the following block to get raw data output for debugging and calibrating distance / angle
-                
+                        #uncomment the following block to get raw data output for debugging and calibrating distance / angle
+                        
 
 
-                #center_x = r_x + int(round(r_w / 2)) + FUEL_X_OFFSET
-                #center_y = r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET
-                #extent = float(area) / (r_w * r_h)
-                #print(f'ar={area:4.1f} ex={extent:1.2f} fuel_x={center_x} fuel_y={center_y}')
+                        #center_x = r_x + int(round(r_w / 2)) + FUEL_X_OFFSET
+                        #center_y = r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET
+                        #extent = float(area) / (r_w * r_h)
+                        #print(f'ar={area:4.1f} ex={extent:1.2f} fuel_x={center_x} fuel_y={center_y}')
 
 
 
-            # at this point, max_contour points to closest shape by vertical y or None if the area of all were too small
-            # now need to determine if this shape is a fuel
-            if max_contour is not None:
+                        # at this point, max_contour points to closest shape by vertical y or None if the area of all were too small
+                        # now need to determine if this shape is a fuel
+                        if max_contour is not None:
 
-                area = cv2.contourArea(max_contour)
+                            max_area = cv2.contourArea(max_contour)
+                            r_x,r_y,r_w,r_h = cv2.boundingRect(max_contour)
+                            center_x = r_x + int(round(r_w / 2)) + FUEL_X_OFFSET
+                            center_y = r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET
 
-                r_x,r_y,r_w,r_h = cv2.boundingRect(max_contour)
-                center_x = r_x + int(round(r_w / 2)) + FUEL_X_OFFSET
-                center_y = r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET
+                            if (center_y > 17  and center_y < 240*2):
 
-                if (center_y > 17  and center_y < 240*2):
+                                '''if (center_y > 240*2): # at really close, can't see the bottom, aspect ratio goes way up 
+                                    extent_min = 0.25
+                                else:
+                                    extent_min = 0.25'''
 
-                    if (center_y > 240*2): # at really close, can't see the bottom, aspect ratio goes way up 
-                        extent_min = 0.25
-                    else:
-                        extent_min = 0.25
+                                #Extent is the ratio of contour area to bounding rectangle area.
+                                #extent = float(area) / (r_w * r_h)
 
-                    #Extent is the ratio of contour area to bounding rectangle area.
-                    extent = float(area) / (r_w * r_h)
+                                #extent goes way down when we get real close
+                                #if (extent > extent_min and extent < 1.0):
 
-                    #extent goes way down when we get real close
-                    if (extent > extent_min and extent < 1.0):
+                                if center_y >= 440: # don't see a full fuel this close, so y value for this distance is a bit off so force it to 0
+                                    distance = 0
+                                else:
+                                    distance = fuel_regress_distance(center_y) * 12 # get distance (inches) using y location
+                                px_per_deg = fuel_regress_px_per_deg(distance) # get pixel per degree
+                                one_fuel_area = fuel_regress_area(px_per_deg)
+                                if orient == orientation.SQUARE and len(approx) >= 8 and len(approx) <= 11:
+                                    amount = 1
+                                else:
+                                    amount = int(math.ceil(max_area/one_fuel_area))
+                                angle = (1 / px_per_deg) * (center_x - w/2)
+                                yVal = center_y
+                                xVal = center_x
+                                if (distance >= 0 and distance < 150) and (angle >= -20 and angle < 20): # sanity check'''
+                            
+                                    fuel_data.append(Fuel_Data_Class(distance, angle, orient, amount))
+                                    
+                                    #End of contour loop
+            
+            #if max_contour is not None and not fuel_data:
+            if max_contour is not None and len(fuel_data) > 0:
+                image_num += 1
+                image_counter += 1
+                image_time = time.perf_counter() - t1_time
+                image_time_av_total += image_time
 
-                        if center_y >= 440: # don't see a full fuel this close, so y value for this distance is a bit off so force it to 0
-                            distance = 0
-                        else:
-                            distance = fuel_regress_distance(center_y) * 12 # get distance (inches) using y location
-                        px_per_deg = fuel_regress_px_per_deg(distance) # get pixel per degree
-                        angle = (1 / px_per_deg) * (center_x - w/2)
-                        yVal = center_y
-                        xVal = center_x
-                        if (distance >= 0 and distance < 150) and (angle >= -20 and angle < 20): # sanity check'''
-                    
-                            image_num += 1
-                            image_counter += 1
-                            image_time = time.perf_counter() - t1_time
-                            image_time_av_total += image_time
+                if image_counter == FPS_NUM_SAMPLES:
+                    fps_av = 1/(image_time_av_total/image_counter)
+                    if fps_av < fps_av_min:
+                        fps_av_min = fps_av
+                    if fps_av > fps_av_max:
+                        fps_av_max = fps_av
+                    image_time_av_total = 0
+                    image_counter = 0
 
-                            if image_counter == FPS_NUM_SAMPLES:
-                                fps_av = 1/(image_time_av_total/image_counter)
-                                if fps_av < fps_av_min:
-                                    fps_av_min = fps_av
-                                if fps_av > fps_av_max:
-                                    fps_av_max = fps_av
-                                image_time_av_total = 0
-                                image_counter = 0
+                pose_data = piece_pose_data_bytes(image_num, rio_time, image_time, fuel_data)
+                fuel_pose_data_bytes_ntt.set(pose_data)
+                NetworkTableInstance.getDefault().flush()
 
-                            pose_data = piece_pose_data_bytes(image_num, rio_time, image_time, 3, distance, angle)
-                            fuel_pose_data_bytes_ntt.set(pose_data)
-                            NetworkTableInstance.getDefault().flush()
+                if db_n == True:
+                    txt = piece_pose_data_string(image_num, rio_time, image_time, fuel_data)
+                    fuel_pose_data_string_header_ntt.set(txt)
+                    fuel_area_ntt.set(max_area)
+                    fuel_distance_ntt.set(round(distance,2))
+                    fuel_angle_ntt.set(round(angle,2))   
+                    fuel_y_val_ntt.set(yVal)   
+                    fuel_x_val_ntt.set(xVal)   
+                    fuel_orientation.set(orient.name)              
+                    cv2.circle(img, (center_x, center_y), 6, (255,0,255), -1)
+                    cv2.drawContours(img, [max_contour], 0, (200,0,0), 4)
+                    fuel_config_save(fuelConfigSave)
+                    outputStreamFuel.putFrame(img) # send to dashboard
+                    outputMask.putFrame(img_mask) # send to dashboard
+                    if fuel_record_data_ntt.get() == True:
+                        fuel_data = f'{area:4.1f},{extent:2.1f},{center_x},{center_y},{distance:3.1f},{angle:2.1f}'
+                        with open('fuel_data.txt', 'a') as f:
+                            f.write(fuel_data)
+                            f.write('\n')
+                        fuel_record_data_ntt.set(False)
+                    continue
 
-                            if db_n == True:
-                                txt = piece_pose_data_string(image_num, rio_time, image_time, distance, angle)
-                                fuel_pose_data_string_header_ntt.set(txt)
-                                fuel_distance_ntt.set(round(distance,2))
-                                fuel_angle_ntt.set(round(angle,2))   
-                                fuel_y_val_ntt.set(yVal)   
-                                fuel_x_val_ntt.set(xVal)                 
-                                cv2.circle(img, (center_x, center_y), 6, (255,0,255), -1)
-                                cv2.drawContours(img, [max_contour], 0, (200,0,0), 4)
-                                fuel_config_save(fuelConfigSave)
-                                outputStreamFuel.putFrame(img) # send to dashboard
-                                outputMask.putFrame(img_mask) # send to dashboard
-                                if fuel_record_data_ntt.get() == True:
-                                    fuel_data = f'{area:4.1f},{extent:2.1f},{center_x},{center_y},{distance:3.1f},{angle:2.1f}'
-                                    with open('fuel_data.txt', 'a') as f:
-                                        f.write(fuel_data)
-                                        f.write('\n')
-                                    fuel_record_data_ntt.set(False)
-                                continue
             if db_n == True:
                 fuel_config_save(fuelConfigSave)
                 outputStreamFuel.putFrame(img) # send to dashboard
