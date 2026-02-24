@@ -1226,103 +1226,105 @@ def main():
                     
                     #circle detection
                     circle_aspect_w = r_w / r_h
-                    if (len(approx) >= 8) and circle_area > min_circle_area:
-                        cv2.rectangle(img, (r_x, r_y), (r_x + r_w, r_y + r_h), (0, 0, 0), 2)                        
+                    if (len(approx) >= 8) and circle_area > min_circle_area:              
                         circle_aspect_h = r_h / r_w
-                        circle_ratio = max(circle_aspect_w, circle_aspect_h) - min(circle_aspect_w, circle_aspect_h)
-                        if circle_ratio < 0.17:
-                            cv2.putText(img, "1 FUEL", (r_x , (round(r_y + (1.5 * r_h)))), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 0, 0), 2) 
-                            orient = orientation.SQUARE
-                        else:
-                            if circle_aspect_w > 1:
-                                orient = orientation.HORIZONTAL
+                        extent = area/(r_w*r_h)
+                        if extent > 0.65:
+                            cv2.rectangle(img, (r_x, r_y), (r_x + r_w, r_y + r_h), (0, 0, 0), 2)          
+                            circle_ratio = max(circle_aspect_w, circle_aspect_h) - min(circle_aspect_w, circle_aspect_h)
+                            if circle_ratio < 0.17:
+                                cv2.putText(img, "1 FUEL", (r_x , (round(r_y + (1.5 * r_h)))), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 0, 0), 2) 
+                                orient = orientation.SQUARE
                             else:
-                                orient = orientation.VERTICAL
-                        
-                        max_contour = y
+                                if circle_aspect_w > 1:
+                                    orient = orientation.HORIZONTAL
+                                else:
+                                    orient = orientation.VERTICAL
+                            
+                            max_contour = y
 
-                        ''' if amount_view_type == 0:
-                            #max y
-                            center_y = r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET
-                            if center_y > center_y_max:
-                                center_y_max = center_y
-                                max_contour = y
-
-
-                        elif amount_view_type == 1:
-                            #aspect ratio
-                            aspectW = r_w / r_h
-                            aspectH = r_h / r_w
-                            ratioDiff = max(aspectW, aspectH) - min(aspectW, aspectH)
-                            if ratioDiff >= maxRatioDiff:
-                                max_contour = y
-                                maxRatioDiff = ratioDiff   
+                            ''' if amount_view_type == 0:
+                                #max y
+                                center_y = r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET
+                                if center_y > center_y_max:
+                                    center_y_max = center_y
+                                    max_contour = y
 
 
-                        elif amount_view_type == 2:
-                            #inverse
-                            contour_area = cv2.contourArea(y)
-                            rect_area = r_h * r_w
-                            inverse_area = rect_area - contour_area
-                            if(inverse_area > max_inverse_area):
-                                max_contour = y
-                                max_inverse_area = inverse_area '''
+                            elif amount_view_type == 1:
+                                #aspect ratio
+                                aspectW = r_w / r_h
+                                aspectH = r_h / r_w
+                                ratioDiff = max(aspectW, aspectH) - min(aspectW, aspectH)
+                                if ratioDiff >= maxRatioDiff:
+                                    max_contour = y
+                                    maxRatioDiff = ratioDiff   
+
+
+                            elif amount_view_type == 2:
+                                #inverse
+                                contour_area = cv2.contourArea(y)
+                                rect_area = r_h * r_w
+                                inverse_area = rect_area - contour_area
+                                if(inverse_area > max_inverse_area):
+                                    max_contour = y
+                                    max_inverse_area = inverse_area '''
+                                
+
+
+
+                            #uncomment the following block to get raw data output for debugging and calibrating distance / angle
                             
 
 
-
-                        #uncomment the following block to get raw data output for debugging and calibrating distance / angle
-                        
-
-
-                        #center_x = r_x + int(round(r_w / 2)) + FUEL_X_OFFSET
-                        #center_y = r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET
-                        #extent = float(area) / (r_w * r_h)
-                        #print(f'ar={area:4.1f} ex={extent:1.2f} fuel_x={center_x} fuel_y={center_y}')
+                            #center_x = r_x + int(round(r_w / 2)) + FUEL_X_OFFSET
+                            #center_y = r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET
+                            #extent = float(area) / (r_w * r_h)
+                            #print(f'ar={area:4.1f} ex={extent:1.2f} fuel_x={center_x} fuel_y={center_y}')
 
 
 
-                        # at this point, max_contour points to closest shape by vertical y or None if the area of all were too small
-                        # now need to determine if this shape is a fuel
-                        if max_contour is not None:
+                            # at this point, max_contour points to closest shape by vertical y or None if the area of all were too small
+                            # now need to determine if this shape is a fuel
+                            if max_contour is not None:
 
-                            max_area = cv2.contourArea(max_contour)
-                            r_x,r_y,r_w,r_h = cv2.boundingRect(max_contour)
-                            center_x = r_x + int(round(r_w / 2)) + FUEL_X_OFFSET
-                            center_y = r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET
+                                max_area = cv2.contourArea(max_contour)
+                                r_x,r_y,r_w,r_h = cv2.boundingRect(max_contour)
+                                center_x = r_x + int(round(r_w / 2)) + FUEL_X_OFFSET
+                                center_y = r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET
 
-                            if (center_y > 17  and center_y < 240*2):
+                                if (center_y > 17  and center_y < 240*2):
 
-                                '''if (center_y > 240*2): # at really close, can't see the bottom, aspect ratio goes way up 
-                                    extent_min = 0.25
-                                else:
-                                    extent_min = 0.25'''
+                                    '''if (center_y > 240*2): # at really close, can't see the bottom, aspect ratio goes way up 
+                                        extent_min = 0.25
+                                    else:
+                                        extent_min = 0.25'''
 
-                                #Extent is the ratio of contour area to bounding rectangle area.
-                                #extent = float(area) / (r_w * r_h)
+                                    #Extent is the ratio of contour area to bounding rectangle area.
+                                    #extent = float(area) / (r_w * r_h)
 
-                                #extent goes way down when we get real close
-                                #if (extent > extent_min and extent < 1.0):
+                                    #extent goes way down when we get real close
+                                    #if (extent > extent_min and extent < 1.0):
 
-                                if center_y >= 440: # don't see a full fuel this close, so y value for this distance is a bit off so force it to 0
-                                    distance = 0
-                                else:
-                                    distance = fuel_regress_distance(center_y) * 12 # get distance (inches) using y location
-                                px_per_deg = fuel_regress_px_per_deg(distance) # get pixel per degree
-                                one_fuel_area = fuel_regress_area(px_per_deg)
-                                if orient == orientation.SQUARE and len(approx) >= 8 and len(approx) <= 11:
-                                    amount = 1
-                                else:
-                                    amount = int(math.ceil(max_area/one_fuel_area))
-                                angle = (1 / px_per_deg) * (center_x - w/2)
-                                yVal = center_y
-                                xVal = center_x
-                                if (distance >= 0 and distance < 150) and (angle >= -20 and angle < 20): # sanity check'''
-                            
-                                    fuel_data.append(Fuel_Data_Class(distance, angle, orient, amount))
-                                    
-                                    #End of contour loop
-            
+                                    if center_y >= 440: # don't see a full fuel this close, so y value for this distance is a bit off so force it to 0
+                                        distance = 0
+                                    else:
+                                        distance = fuel_regress_distance(center_y) * 12 # get distance (inches) using y location
+                                    px_per_deg = fuel_regress_px_per_deg(distance) # get pixel per degree
+                                    one_fuel_area = fuel_regress_area(px_per_deg)
+                                    if orient == orientation.SQUARE and len(approx) >= 8 and len(approx) <= 11:
+                                        amount = 1
+                                    else:
+                                        amount = int(math.ceil(max_area/one_fuel_area))
+                                    angle = (1 / px_per_deg) * (center_x - w/2)
+                                    yVal = center_y
+                                    xVal = center_x
+                                    if (distance >= 0 and distance < 150) and (angle >= -20 and angle < 20): # sanity check'''
+                                
+                                        fuel_data.append(Fuel_Data_Class(distance, angle, orient, amount))
+                                        
+                                        #End of contour loop
+                
             #if max_contour is not None and not fuel_data:
             if max_contour is not None and len(fuel_data) > 0:
                 image_num += 1
