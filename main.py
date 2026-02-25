@@ -214,7 +214,8 @@ def file_write_fuel(file,
                 max_h,
                 max_s,
                 max_v,
-                min_area):
+                min_area,
+                min_Ex):
 
     parser = configparser.ConfigParser()
 
@@ -227,6 +228,7 @@ def file_write_fuel(file,
     parser.set('VISION', FUEL_MAX_SAT_TOPIC_NAME, str(round(max_s)))
     parser.set('VISION', FUEL_MAX_VAL_TOPIC_NAME, str(round(max_v)))
     parser.set('VISION', FUEL_MIN_AREA_TOPIC_NAME, str(round(min_area)))
+    parser.set('VISION', FUEL_MIN_EXTENT_TOPIC_NAME, str(round(min_Ex, 2)))
     
     #print(f'file={file} mh={str(min_h)} ms={str(min_s)} mv={str(min_v)} xh={str(max_h)} xs={str(max_s)} xv={str(max_v)}')
 
@@ -343,6 +345,8 @@ def file_read_fuel(parser, configfile_failure_ntt):
         parser.set('VISION', FUEL_MAX_SAT_TOPIC_NAME, str(FUEL_MAX_SAT))
         parser.set('VISION', FUEL_MAX_VAL_TOPIC_NAME, str(FUEL_MAX_VAL))
         parser.set('VISION', FUEL_MIN_AREA_TOPIC_NAME, str(FUEL_MIN_AREA))
+        parser.set('VISION', FUEL_MIN_EXTENT_TOPIC_NAME, str(FUEL_MIN_EXTENT))
+
 
         with open("/home/pi/" + FUEL_CONFIG_FILE_DEFAULT, 'w') as config:
             parser.write(config)
@@ -413,7 +417,8 @@ def nt_update_fuel(config,
               max_h,
               max_s,
               max_v,
-              min_area):
+              min_area,
+              min_extent):
     # sync the stuff in the file with matching values in the file
 
     print('dump fuel file:')
@@ -427,6 +432,9 @@ def nt_update_fuel(config,
     mx_s = float(config.get('VISION', FUEL_MAX_SAT_TOPIC_NAME))
     mx_v = float(config.get('VISION', FUEL_MAX_VAL_TOPIC_NAME))
 
+    mi_a = float(config.get('VISION', FUEL_MIN_AREA_TOPIC_NAME))
+    mi_ex = float(config.get('VISION', FUEL_MIN_EXTENT_TOPIC_NAME))
+
     #configfile.set(str(config.get('VISION', FUEL_CONFIG_FILE_TOPIC_NAME)))
     min_h.set(mi_h)
     min_s.set(mi_s)
@@ -434,7 +442,8 @@ def nt_update_fuel(config,
     max_h.set(mx_h)
     max_s.set(mx_s)
     max_v.set(mx_v)
-    #min_area.set(float(config.get('VISION', FUEL_MIN_AREA_TOPIC_NAME)))
+    min_area.set(mi_a)
+    min_extent.set(mi_ex)
 
 def nt_update_gen(type,
                   config,
@@ -512,7 +521,7 @@ def remove_image_files(path):
             os.remove(file_path)  
 
 class Fuel_Config_Save_Class:
-    def __init__(self, save, fileName, minH, maxH, minS, maxS, minV, maxV, minA):
+    def __init__(self, save, fileName, minH, maxH, minS, maxS, minV, maxV, minA, minEx):
         self.save = save
         self.fileName = fileName
         self.minH = minH
@@ -522,6 +531,7 @@ class Fuel_Config_Save_Class:
         self.minV = minV
         self.maxV = maxV
         self.minA = minA
+        self.minEx = minEx
 
 
 def fuel_config_save(config):
@@ -534,7 +544,8 @@ def fuel_config_save(config):
             config.maxH.get(), \
             config.maxS.get(), \
             config.maxV.get(), \
-            config.minA.get())
+            config.minA.get(), \
+            config.minEx.get())
         config.save.set(False)
 
 class orientation(Enum):
@@ -615,6 +626,7 @@ def main():
     tag_enable = NTGetBoolean(ntinst.getBooleanTopic(TAG_ENABLE_TOPIC_NAME), False, False, False)
     fuel_enable_ntt = NTGetBoolean(ntinst.getBooleanTopic(FUEL_ENABLE_TOPIC_NAME), False, False, False)
     fuel_min_area_ntt = NTGetDouble(ntinst.getDoubleTopic(FUEL_MIN_AREA_TOPIC_NAME), FUEL_MIN_AREA, FUEL_MIN_AREA, FUEL_MIN_AREA)
+    fuel_min_extent_ntt = NTGetDouble(ntinst.getDoubleTopic(FUEL_MIN_EXTENT_TOPIC_NAME), FUEL_MIN_EXTENT, FUEL_MIN_EXTENT, FUEL_MIN_EXTENT)
     fuel_angle_ntt = NTGetDouble(ntinst.getDoubleTopic(FUEL_ANGLE_TOPIC_NAME), 0.0, 0.0, 0.0)
     tag_record_ntt = NTGetBoolean(ntinst.getBooleanTopic(TAG_RECORD_ENABLE_TOPIC_NAME), False, False, False)
     tag_record_remove_ntt = NTGetBoolean(ntinst.getBooleanTopic(TAG_RECORD_REMOVE_TOPIC_NAME), False, False, False)
@@ -674,7 +686,8 @@ def main():
         fuel_max_s_ntt, \
         fuel_min_v_ntt, \
         fuel_max_v_ntt, \
-        fuel_min_area_ntt)
+        fuel_min_area_ntt, \
+        fuel_min_extent_ntt)
 
     '''
     print('*****')
@@ -693,7 +706,7 @@ def main():
     file_read_fuel(config_fuel, configfilefail_ntt)
     nt_update_fuel(config_fuel, fuelconfigfile_ntt, \
         fuel_min_h_ntt, fuel_min_s_ntt, fuel_min_v_ntt, fuel_max_h_ntt, fuel_max_s_ntt, fuel_max_v_ntt, \
-        fuel_min_area_ntt)
+        fuel_min_area_ntt, fuel_min_extent_ntt)
 
     file_read_gen(config_gen, configfilefail_ntt)
     nt_update_gen(vision_type, config_gen, tag_brightness_ntt, tag_contrast_ntt, tag_ae_ntt, tag_exposure_ntt, \
@@ -718,6 +731,7 @@ def main():
     fuel_max_v = int(config_fuel.get('VISION', FUEL_MAX_VAL_TOPIC_NAME))
     fuel_min_area = int(config_fuel.get('VISION', FUEL_MIN_AREA_TOPIC_NAME))
     fuel_max_area = 1000
+    fuel_min_extent = float(config_fuel.get('VISION', FUEL_MIN_EXTENT_TOPIC_NAME))
 
     #set up pose estimation
     ''' old way for camera calibration
@@ -897,7 +911,7 @@ def main():
                         file_read_fuel(config_fuel, configfilefail_ntt)
                         nt_update_fuel(config_fuel, fuelconfigfile_ntt, \
                             fuel_min_h_ntt, fuel_min_s_ntt, fuel_min_v_ntt, fuel_max_h_ntt, fuel_max_s_ntt, fuel_max_v_ntt, \
-                            fuel_min_area_ntt)
+                            fuel_min_area_ntt, fuel_min_extent_ntt)
                         file_read_gen(config_gen, configfilefail_ntt)
                         nt_update_gen(vision_type, config_gen, tag_brightness_ntt, tag_contrast_ntt, tag_ae_ntt, tag_exposure_ntt, \
                             fuel_brightness_ntt, fuel_contrast_ntt, fuel_ae_ntt, fuel_exposure_ntt, gen_fuel_y_offset_ntt)
@@ -1165,6 +1179,7 @@ def main():
                 fuel_max_s = int(fuel_max_s_ntt.get())
                 fuel_max_v = int(fuel_max_v_ntt.get())
                 fuel_min_area = int(fuel_min_area_ntt.get())
+                fuel_min_extent = float(fuel_min_extent_ntt.get())
 
             '''
             # filter colors in HSV space
@@ -1186,7 +1201,7 @@ def main():
             
             view_types = ["Maximum Y View", "Aspect Ratio View", "Inverse BoundingRect Area View"]
 
-            #Fuel amount dectect mode button
+            #Fuel amount dectect mode button (delete me!!! + ntt)
             mode_increment = fuel_amount_detect_mode_ntt.get()
             if mode_increment == True:
                 amount_view_type += 1
@@ -1194,7 +1209,7 @@ def main():
                     amount_view_type = 0
                 print(view_types[amount_view_type])
                 fuel_amount_detect_mode_ntt.set(False)
-            cv2.putText(img, view_types[amount_view_type], (0, 22), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 220), 2) 
+            #cv2.putText(img, view_types[amount_view_type], (0, 22), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 220), 2) 
 
             
             color, useless = cv2.findContours(img_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -1229,7 +1244,7 @@ def main():
                     if (len(approx) >= 8) and circle_area > min_circle_area:              
                         circle_aspect_h = r_h / r_w
                         extent = area/(r_w*r_h)
-                        if extent > 0.65:
+                        if extent > fuel_min_extent:
                             cv2.rectangle(img, (r_x, r_y), (r_x + r_w, r_y + r_h), (0, 0, 0), 2)          
                             circle_ratio = max(circle_aspect_w, circle_aspect_h) - min(circle_aspect_w, circle_aspect_h)
                             if circle_ratio < 0.17:
