@@ -1239,16 +1239,25 @@ def main():
                     approx = cv2.approxPolyDP(y, 0.02 * perim ,True)
                     circle_area = cv2.contourArea(approx)
                     
+                    #print("arcs: " + str(len(approx)))
+                    #print("contours: " + str(len(colorSorted)))
+                    #print("circle area: " + str(circle_area))
                     #circle detection
                     circle_aspect_w = r_w / r_h
-                    if (len(approx) >= 8) and circle_area > min_circle_area:              
+                    approx_arcs = 5
+                    if r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET > 420:
+                        approx_arcs = 2
+                        min_circle_area *= 0.8
+                        fuel_min_extent *= 0.9
+                    #print("min area: " + str(min_circle_area))
+                    if (len(approx) >= approx_arcs) and circle_area > min_circle_area:
                         circle_aspect_h = r_h / r_w
                         extent = area/(r_w*r_h)
                         if extent > fuel_min_extent:
                             cv2.rectangle(img, (r_x, r_y), (r_x + r_w, r_y + r_h), (0, 0, 0), 2)          
                             circle_ratio = max(circle_aspect_w, circle_aspect_h) - min(circle_aspect_w, circle_aspect_h)
                             if circle_ratio < 0.17:
-                                cv2.putText(img, "1 FUEL", (r_x , (round(r_y + (1.5 * r_h)))), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 0, 0), 2) 
+                                #cv2.putText(img, "1 FUEL", (r_x , (round(r_y + (1.5 * r_h)))), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 0, 0), 2) 
                                 orient = orientation.SQUARE
                             else:
                                 if circle_aspect_w > 1:
@@ -1302,14 +1311,12 @@ def main():
                             # at this point, max_contour points to closest shape by vertical y or None if the area of all were too small
                             # now need to determine if this shape is a fuel
                             if max_contour is not None:
-
                                 max_area = cv2.contourArea(max_contour)
                                 r_x,r_y,r_w,r_h = cv2.boundingRect(max_contour)
                                 center_x = r_x + int(round(r_w / 2)) + FUEL_X_OFFSET
                                 center_y = r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET
 
                                 if (center_y > 17  and center_y < 240*2):
-
                                     '''if (center_y > 240*2): # at really close, can't see the bottom, aspect ratio goes way up 
                                         extent_min = 0.25
                                     else:
@@ -1334,6 +1341,7 @@ def main():
                                     angle = (1 / px_per_deg) * (center_x - w/2)
                                     yVal = center_y
                                     xVal = center_x
+
                                     if (distance >= 0 and distance < 150) and (angle >= -20 and angle < 20): # sanity check'''
                                 
                                         fuel_data.append(Fuel_Data_Class(distance, angle, orient, amount))
@@ -1369,8 +1377,8 @@ def main():
                     fuel_y_val_ntt.set(yVal)   
                     fuel_x_val_ntt.set(xVal)   
                     fuel_orientation.set(orient.name)              
-                    cv2.circle(img, (center_x, center_y), 6, (255,0,255), -1)
-                    cv2.drawContours(img, [max_contour], 0, (200,0,0), 4)
+                    #cv2.circle(img, (center_x, center_y), 6, (255,0,255), -1)
+                    #cv2.drawContours(img, [max_contour], 0, (200,0,0), 4)
                     fuel_config_save(fuelConfigSave)
                     outputStreamFuel.putFrame(img) # send to dashboard
                     outputMask.putFrame(img_mask) # send to dashboard
