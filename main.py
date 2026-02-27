@@ -117,9 +117,9 @@ def pose_data_string(sequence_num, rio_time, time, tags, tag_poses, nt_objects):
     return string_header, string_data_rot, string_data_t
 
 def piece_pose_data_string(sequence_num, rio_time, time, data):
-    string_header = f'num={sequence_num} t_rio={rio_time:1.3f} t_img={time:1.3f} objs={len(data)} '
+    string_header = f'num={sequence_num} t_rio={rio_time:1.3f} t_img={time:1.3f} objs={len(data)}  |'
     for i in range(len(data)):
-        string_header += f'dist={data[i].distance:3.2f} angl={data[i].angle:3.2f} orient={data[i].orientation.name} amount={data[i].amount:3d}    '
+        string_header += f'|  dist={data[i].distance:3.2f} angle={data[i].angle:3.2f} orient={data[i].orientation.name} amount={data[i].amount:3d}  '
 
     return string_header
 
@@ -354,7 +354,7 @@ def file_read_fuel(parser, configfile_failure_ntt):
             print({'VISION': dict(parser['VISION'])})
         configfile_failure_ntt.set(False) # config file recreated
 
-def file_write_gen(brightness, contrast, ae_mode, man_exposure_time, y_offset):
+def file_write_gen(brightness, contrast, ae_mode, man_exposure_time, y_offset, x_offset):
 
     parser = configparser.ConfigParser()
     parser.read("/home/pi/" + GEN_CONFIG_FILE_DEFAULT)
@@ -363,6 +363,7 @@ def file_write_gen(brightness, contrast, ae_mode, man_exposure_time, y_offset):
     parser.set('GENERAL', 'Auto Exposure', str(ae_mode))
     parser.set('GENERAL', 'Manual Exposure Time', str(man_exposure_time))
     parser.set('GENERAL', 'Y Offset', str(y_offset))
+    parser.set('GENERAL', 'X Offset', str(x_offset))
 
     with open("/home/pi/" + GEN_CONFIG_FILE_DEFAULT, 'w') as config:
         parser.write(config)
@@ -455,13 +456,15 @@ def nt_update_gen(type,
               fuel_contrast,
               fuel_ae,
               fuel_exposure,
-              y_offset):
+              y_offset,
+              x_offset):
     # sync the stuff in the file with matching values in the file
     b = float(config.get('GENERAL', 'Brightness'))
     c = float(config.get('GENERAL', 'Contrast'))
     ae = bool(config.get('GENERAL', 'Auto Exposure'))
     exp = float(config.get('GENERAL', 'Manual Exposure Time'))
     y = float(config.get('GENERAL', 'Y Offset'))
+    x = float(config.get('GENERAL', 'X Offset'))
 
     if type == 'tag':
         tag_brightness.set(b)
@@ -474,6 +477,7 @@ def nt_update_gen(type,
         fuel_ae.set(ae)
         fuel_exposure.set(exp)
         y_offset.set(y)
+        x_offset.set(x)
 
 '''
 all data to send is packaged as an array of bytes, using a Python bytearray, in big-endian format:
@@ -668,6 +672,7 @@ def main():
     fuel_amount_detect_mode_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Fuel Amount Detection Mode"), False, False, False)
 
     gen_fuel_y_offset_ntt =  NTGetDouble(ntinst.getDoubleTopic(GEN_FUEL_Y_OFFSET_TOPIC_NAME), 0, 0, 0)
+    gen_fuel_x_offset_ntt =  NTGetDouble(ntinst.getDoubleTopic(GEN_FUEL_X_OFFSET_TOPIC_NAME), 0, 0, 0)
 
     detector = robotpy_apriltag.AprilTagDetector()
     #detector.addFamily("tag16h5")
@@ -710,7 +715,7 @@ def main():
 
     file_read_gen(config_gen, configfilefail_ntt)
     nt_update_gen(vision_type, config_gen, tag_brightness_ntt, tag_contrast_ntt, tag_ae_ntt, tag_exposure_ntt, \
-        fuel_brightness_ntt, fuel_contrast_ntt, fuel_ae_ntt, fuel_exposure_ntt, gen_fuel_y_offset_ntt)
+        fuel_brightness_ntt, fuel_contrast_ntt, fuel_ae_ntt, fuel_exposure_ntt, gen_fuel_y_offset_ntt, gen_fuel_x_offset_ntt)
     
     detectorConfig = robotpy_apriltag.AprilTagDetector.Config()
 
@@ -851,6 +856,8 @@ def main():
 
 
     FUEL_Y_OFFSET = int(config_gen.get('GENERAL', 'Y Offset'))
+    FUEL_X_OFFSET = int(config_gen.get('GENERAL', 'X Offset'))
+  
 
     while True:
 
@@ -897,7 +904,7 @@ def main():
                         cam_settings_changed = True
 
                     if cam_settings_changed == True and tag_camera_safefile_ntt.get() == True:
-                        file_write_gen(brightness, contrast, ae_mode, exp_time, FUEL_Y_OFFSET)
+                        file_write_gen(brightness, contrast, ae_mode, exp_time, FUEL_Y_OFFSET, FUEL_X_OFFSET)
                         tag_camera_safefile_ntt.set(False)
                         cam_settings_changed = False
 
@@ -914,7 +921,7 @@ def main():
                             fuel_min_area_ntt, fuel_min_extent_ntt)
                         file_read_gen(config_gen, configfilefail_ntt)
                         nt_update_gen(vision_type, config_gen, tag_brightness_ntt, tag_contrast_ntt, tag_ae_ntt, tag_exposure_ntt, \
-                            fuel_brightness_ntt, fuel_contrast_ntt, fuel_ae_ntt, fuel_exposure_ntt, gen_fuel_y_offset_ntt)
+                            fuel_brightness_ntt, fuel_contrast_ntt, fuel_ae_ntt, fuel_exposure_ntt, gen_fuel_y_offset_ntt, gen_fuel_x_offset_ntt)
                         fuel_camera_refresh_nt_ntt.set(False)
 
                     if fuel_last_brightness != fuel_brightness_ntt.get():
@@ -949,10 +956,15 @@ def main():
                         FUEL_Y_OFFSET = int(round(gen_fuel_y_offset_ntt.get(),0))
                         config_gen.set('GENERAL', 'Y Offset', str(FUEL_Y_OFFSET))
                         cam_settings_changed = True
+
+                    if FUEL_X_OFFSET != gen_fuel_x_offset_ntt.get():
+                        FUEL_X_OFFSET = int(round(gen_fuel_x_offset_ntt.get(),0))
+                        config_gen.set('GENERAL', 'X Offset', str(FUEL_X_OFFSET))
+                        cam_settings_changed = True
                     
                     if cam_settings_changed == True and fuel_camera_savefile_ntt.get() == True:
                         print("saving camera settings")
-                        file_write_gen(brightness, contrast, ae_mode, exp_time, FUEL_Y_OFFSET)
+                        file_write_gen(brightness, contrast, ae_mode, exp_time, FUEL_Y_OFFSET, FUEL_X_OFFSET)
                         fuel_camera_savefile_ntt.set(False)
                         cam_settings_changed = False
                     elif cam_settings_changed == False and fuel_camera_savefile_ntt.get() == True:
@@ -1245,6 +1257,7 @@ def main():
                     #circle detection
                     circle_aspect_w = r_w / r_h
                     approx_arcs = 5
+                    #different criteria when fuel gets close
                     if r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET > 420:
                         approx_arcs = 2
                         min_circle_area *= 0.8

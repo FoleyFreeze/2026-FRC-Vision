@@ -83,6 +83,8 @@ FUEL_AMOUNT_DETECT_MODE_TOPIC_NAME = "/Vision/Fuel Amount Detection Mode"
 FUEL_AMOUNT_DETECT_MODE_DEFAULT = 2
 
 GEN_FUEL_Y_OFFSET_TOPIC_NAME = "/Vision/Fuel Y Offset"
+GEN_FUEL_X_OFFSET_TOPIC_NAME = "/Vision/Fuel X Offset"
+
 
 TAG_ERRORS_TOPIC_NAME = "/Vision/Tag Corrected Errors"
 TAG_ERRORS_DEFAULT = 0
