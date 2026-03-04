@@ -668,6 +668,7 @@ def main():
     tag_camera_safefile_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Tag Camera Save"), False, False, False)
     fuel_camera_savefile_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Fuel Camera Save"), False, False, False)
     fuel_camera_refresh_nt_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Fuel Camera Refresh Nt"), False, False, False)
+    frame_rate_ntt = NTGetDouble(ntinst.getDoubleTopic("/Vision/Average FPS"), 0, 0, 0)
 
     fuel_amount_detect_mode_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Fuel Amount Detection Mode"), False, False, False)
 
@@ -1003,7 +1004,7 @@ def main():
                 temp_sec = 0
                 '''
                  
-        t1_time = time.perf_counter()
+        #t1_time = time.perf_counter()
         #img = picam2.capture_array()
         img = None
         img = server.wait_for_frame(img)
@@ -1014,6 +1015,7 @@ def main():
         #picam2_config['transform'] = libcamera.Transform(hflip=1, vflip=1)
         #picam2.configure(picam2_config)
         #picam2.set_controls({"FrameRate": fps})
+
         if camera_orientation == True:
             img = cv2.flip(img, -1)
 
@@ -1193,6 +1195,7 @@ def main():
                 fuel_min_area = int(fuel_min_area_ntt.get())
                 fuel_min_extent = float(fuel_min_extent_ntt.get())
 
+
             '''
             # filter colors in HSV space
             img_HSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
@@ -1204,6 +1207,7 @@ def main():
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             img_HSV = cv2.cvtColor(original_image, cv2.COLOR_BGR2HSV)
 
+
             # only keep pixels with colors that match the range in color_config
             color_low = np.array([fuel_min_h, fuel_min_s, fuel_min_v])
             color_high = np.array([fuel_max_h, fuel_max_s, fuel_max_v])
@@ -1211,6 +1215,7 @@ def main():
             # fuel should appear in the region below the bottom of this region
             #   img_mask[0:260,0:640] = 0
             
+
             view_types = ["Maximum Y View", "Aspect Ratio View", "Inverse BoundingRect Area View"]
 
             #Fuel amount dectect mode button (delete me!!! + ntt)
@@ -1228,6 +1233,8 @@ def main():
             #sorting the colored pixels from largest to smallest
             colorSorted = sorted(color, key=lambda x: cv2.contourArea(x), reverse=True)
             
+            t1_time = time.process_time()
+
             fuel = []
             fuel_contours = []
         
@@ -1365,7 +1372,7 @@ def main():
             if max_contour is not None and len(fuel_data) > 0:
                 image_num += 1
                 image_counter += 1
-                image_time = time.perf_counter() - t1_time
+                image_time = (time.process_time() - t1_time)
                 image_time_av_total += image_time
 
                 if image_counter == FPS_NUM_SAMPLES:
@@ -1389,7 +1396,8 @@ def main():
                     fuel_angle_ntt.set(round(angle,2))   
                     fuel_y_val_ntt.set(yVal)   
                     fuel_x_val_ntt.set(xVal)   
-                    fuel_orientation.set(orient.name)              
+                    fuel_orientation.set(orient.name)    
+                    frame_rate_ntt.set(round(fps_av, 1))          
                     #cv2.circle(img, (center_x, center_y), 6, (255,0,255), -1)
                     #cv2.drawContours(img, [max_contour], 0, (200,0,0), 4)
                     fuel_config_save(fuelConfigSave)
