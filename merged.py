@@ -1306,11 +1306,11 @@ def main():
                 temp_sec = 0
                 '''
                  
-        #t1_time = time.perf_counter()
         #img = picam2.capture_array()
         img = None
         img = server.wait_for_frame(img)
-        #image_time = time.perf_counter() - t1_time
+        t1_time = time.process_time()
+
         # When the camera bolt hole is facing up, the camera is upside down
         # When the camera bolt hole is facing down, the camera is mounted right side up.
         # If flip needed, flip every image using cv2.flip(img,-1) or tell Picamera2 at config time (now) to flip every image it gives
@@ -1535,8 +1535,6 @@ def main():
             #sorting the colored pixels from largest to smallest
             colorSorted = sorted(color, key=lambda x: cv2.contourArea(x), reverse=True)
             
-            t1_time = time.process_time()
-
             fuel = []
             fuel_contours = []
         
