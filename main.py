@@ -216,7 +216,7 @@ def file_write_fuel(file,
                 max_v,
                 min_area,
                 min_Ex):
-
+    
     parser = configparser.ConfigParser()
 
     parser.add_section('VISION')
@@ -237,6 +237,46 @@ def file_write_fuel(file,
         parser.write(config)
         print('wrote fuel file:')
         print({'VISION': dict(parser['VISION'])})
+
+def file_write_bumper(file,
+                b_min_h,
+                b_min_s,
+                b_min_v,
+                b_max_h,
+                b_max_s,
+                b_max_v,
+                b_min_area,
+                r_min_h,
+                r_min_s,
+                r_min_v,
+                r_max_h,
+                r_max_s,
+                r_max_v,
+                r_min_area):
+    #write the stuff to save bumper vals
+    parser = configparser.ConfigParser()
+
+    parser.add_section('BUMPER')
+    parser.set('BUMPER', BUMPER_CONFIG_FILE_TOPIC_NAME, str(file))
+    parser.set('BUMPER', RED_BUMPER_MIN_H_TOPIC_NAME , str(round(r_min_h)))
+    parser.set('BUMPER', RED_BUMPER_MIN_S_TOPIC_NAME, str(round(r_min_s)))
+    parser.set('BUMPER', RED_BUMPER_MIN_V_TOPIC_NAME, str(round(r_min_v)))
+    parser.set('BUMPER', RED_BUMPER_MAX_H_TOPIC_NAME, str(round(r_max_h)))
+    parser.set('BUMPER', RED_BUMPER_MAX_S_TOPIC_NAME, str(round(r_max_s)))
+    parser.set('BUMPER', RED_BUMPER_MAX_V_TOPIC_NAME, str(round(r_max_v)))
+    parser.set('BUMPER', RED_BUMPER_MIN_A_TOPIC_NAME, str(round(r_min_area)))
+    parser.set('BUMPER', BLUE_BUMPER_MIN_H_TOPIC_NAME, str(round(b_min_h)))
+    parser.set('BUMPER', BLUE_BUMPER_MIN_S_TOPIC_NAME, str(round(b_min_s)))
+    parser.set('BUMPER', BLUE_BUMPER_MIN_V_TOPIC_NAME, str(round(b_min_v)))
+    parser.set('BUMPER', BLUE_BUMPER_MAX_H_TOPIC_NAME, str(round(b_max_h)))
+    parser.set('BUMPER', BLUE_BUMPER_MAX_S_TOPIC_NAME, str(round(b_max_s)))
+    parser.set('BUMPER', BLUE_BUMPER_MAX_V_TOPIC_NAME, str(round(b_max_v)))
+    parser.set('BUMPER', BLUE_BUMPER_MIN_A_TOPIC_NAME, str(round(b_min_area)))
+
+    with open(file, 'w') as config:
+        parser.write(config)
+        print('wrote bumper file:')
+        print({'BUMPER': dict(parser['BUMPER'])})
 
 def get_type():
     parser= configparser.ConfigParser()
@@ -537,6 +577,25 @@ class Fuel_Config_Save_Class:
         self.minA = minA
         self.minEx = minEx
 
+class Bumper_Config_Save_Class:
+    def __init__(self, save, fileName, BminH, BmaxH, BminS, BmaxS, BminV, BmaxV, BminA, RminH, RmaxH, RminS, RmaxS, RminV, RmaxV, RminA ):
+        self.save = save
+        self.fileName = fileName
+        self.BminH = BminH
+        self.BmaxH = BmaxH
+        self.BminS = BminS
+        self.BmaxS = BmaxS
+        self.BminV = BminV
+        self.BmaxV = BmaxV
+        self.BminA = BminA
+        self.RminH = RminH
+        self.RmaxH = RmaxH
+        self.RminS = RminS
+        self.RmaxS = RmaxS
+        self.RminV = RminV
+        self.RmaxV = RmaxV
+        self.RminA = RminA
+
 
 def fuel_config_save(config):
     if config.save.get() == True:
@@ -550,6 +609,26 @@ def fuel_config_save(config):
             config.maxV.get(), \
             config.minA.get(), \
             config.minEx.get())
+        config.save.set(False)
+
+def bumper_config_save(config):
+    if config.save.get() == True:
+        print("saving...")
+        file_write_bumper(config.fileName.get(), \
+            config.BminH.get(), \
+            config.BmaxH.get(), \
+            config.BminS.get(), \
+            config.BmaxS.get(), \
+            config.BminV.get(), \
+            config.BmaxV.get(), \
+            config.BminA.get(), \
+            config.RminH.get(), \
+            config.RmaxH.get(), \
+            config.RminS.get(), \
+            config.RmaxS.get(), \
+            config.RminV.get(), \
+            config.RmaxV.get(), \
+            config.RminA.get())
         config.save.set(False)
 
 class orientation(Enum):
@@ -609,6 +688,7 @@ def main():
     decision_margin_min_ntt = NTGetDouble(ntinst.getDoubleTopic(DECISION_MARGIN_MIN_TOPIC_NAME), DECISION_MARGIN_DEFAULT, DECISION_MARGIN_DEFAULT, DECISION_MARGIN_DEFAULT)
     tagconfigfile_ntt = NTGetString(ntinst.getStringTopic(TAG_CONFIG_FILE_TOPIC_NAME), TAG_CONFIG_FILE_DEFAULT,TAG_CONFIG_FILE_DEFAULT, TAG_CONFIG_FILE_DEFAULT)
     fuelconfigfile_ntt = NTGetString(ntinst.getStringTopic(FUEL_CONFIG_FILE_TOPIC_NAME), FUEL_CONFIG_FILE_DEFAULT,FUEL_CONFIG_FILE_DEFAULT, FUEL_CONFIG_FILE_DEFAULT)
+    bumperconfigfile_ntt = NTGetString(ntinst.getStringTopic(BUMPER_CONFIG_FILE_TOPIC_NAME), BUMPER_CONFIG_FILE_DEFAULT,BUMPER_CONFIG_FILE_DEFAULT, BUMPER_CONFIG_FILE_DEFAULT)
     configfilefail_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Config File Fail"), False, False, False)
     tag_active_ntt = NTGetBoolean(ntinst.getBooleanTopic(TAG_ACTIVE_TOPIC_NAME), True, True, True)
     fuel_active_ntt = NTGetBoolean(ntinst.getBooleanTopic(FUEL_ACTIVE_TOPIC_NAME), True, True, True)
@@ -667,8 +747,24 @@ def main():
     fuel_config_savefile_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Fuel Config Save"), False, False, False)
     tag_camera_safefile_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Tag Camera Save"), False, False, False)
     fuel_camera_savefile_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Fuel Camera Save"), False, False, False)
+    bumper_config_savefile_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Bumper Config Save"), False, False, False)
     fuel_camera_refresh_nt_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Fuel Camera Refresh Nt"), False, False, False)
     frame_rate_ntt = NTGetDouble(ntinst.getDoubleTopic("/Vision/Average FPS"), 0, 0, 0)
+
+    red_bumper_min_h_ntt = NTGetDouble(ntinst.getDoubleTopic(RED_BUMPER_MIN_H_TOPIC_NAME), RED_BUMPER_MIN_H, RED_BUMPER_MIN_H, RED_BUMPER_MIN_H)
+    red_bumper_min_s_ntt = NTGetDouble(ntinst.getDoubleTopic(RED_BUMPER_MIN_S_TOPIC_NAME), RED_BUMPER_MIN_S, RED_BUMPER_MIN_S, RED_BUMPER_MIN_S)
+    red_bumper_min_v_ntt = NTGetDouble(ntinst.getDoubleTopic(RED_BUMPER_MIN_V_TOPIC_NAME), RED_BUMPER_MIN_V, RED_BUMPER_MIN_V, RED_BUMPER_MIN_V)
+    red_bumper_max_h_ntt = NTGetDouble(ntinst.getDoubleTopic(RED_BUMPER_MAX_H_TOPIC_NAME), RED_BUMPER_MAX_H, RED_BUMPER_MAX_H, RED_BUMPER_MAX_H)
+    red_bumper_max_s_ntt = NTGetDouble(ntinst.getDoubleTopic(RED_BUMPER_MAX_S_TOPIC_NAME), RED_BUMPER_MAX_S, RED_BUMPER_MAX_S, RED_BUMPER_MAX_S)
+    red_bumper_max_v_ntt = NTGetDouble(ntinst.getDoubleTopic(RED_BUMPER_MAX_V_TOPIC_NAME), RED_BUMPER_MAX_V, RED_BUMPER_MAX_V, RED_BUMPER_MAX_V)
+    red_bumper_min_area_ntt = NTGetDouble(ntinst.getDoubleTopic(RED_BUMPER_MIN_A_TOPIC_NAME), RED_BUMPER_MIN_A, RED_BUMPER_MIN_A, RED_BUMPER_MIN_A)
+    blue_bumper_min_h_ntt = NTGetDouble(ntinst.getDoubleTopic(BLUE_BUMPER_MIN_H_TOPIC_NAME), BLUE_BUMPER_MIN_H, BLUE_BUMPER_MIN_H, BLUE_BUMPER_MIN_H)
+    blue_bumper_min_s_ntt = NTGetDouble(ntinst.getDoubleTopic(BLUE_BUMPER_MIN_S_TOPIC_NAME), BLUE_BUMPER_MIN_S, BLUE_BUMPER_MIN_S, BLUE_BUMPER_MIN_S)
+    blue_bumper_min_v_ntt = NTGetDouble(ntinst.getDoubleTopic(BLUE_BUMPER_MIN_V_TOPIC_NAME), BLUE_BUMPER_MIN_V, BLUE_BUMPER_MIN_V, BLUE_BUMPER_MIN_V)
+    blue_bumper_max_h_ntt = NTGetDouble(ntinst.getDoubleTopic(BLUE_BUMPER_MAX_H_TOPIC_NAME), BLUE_BUMPER_MAX_H, BLUE_BUMPER_MAX_H, BLUE_BUMPER_MAX_H)
+    blue_bumper_max_s_ntt = NTGetDouble(ntinst.getDoubleTopic(BLUE_BUMPER_MAX_S_TOPIC_NAME), BLUE_BUMPER_MAX_S, BLUE_BUMPER_MAX_S, BLUE_BUMPER_MAX_S)
+    blue_bumper_max_v_ntt = NTGetDouble(ntinst.getDoubleTopic(BLUE_BUMPER_MAX_V_TOPIC_NAME), BLUE_BUMPER_MAX_V, BLUE_BUMPER_MAX_V, BLUE_BUMPER_MAX_V)
+    blue_bumper_min_area_ntt = NTGetDouble(ntinst.getDoubleTopic(BLUE_BUMPER_MIN_A_TOPIC_NAME), BLUE_BUMPER_MIN_A, BLUE_BUMPER_MIN_A, BLUE_BUMPER_MIN_A)
 
     fuel_amount_detect_mode_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Fuel Amount Detection Mode"), False, False, False)
 
@@ -694,6 +790,23 @@ def main():
         fuel_max_v_ntt, \
         fuel_min_area_ntt, \
         fuel_min_extent_ntt)
+    
+    bumperConfigSave = Bumper_Config_Save_Class(bumper_config_savefile_ntt, \
+        bumperconfigfile_ntt, \
+        blue_bumper_min_h_ntt, \
+        blue_bumper_max_h_ntt, \
+        blue_bumper_min_s_ntt, \
+        blue_bumper_max_s_ntt, \
+        blue_bumper_min_v_ntt, \
+        blue_bumper_max_v_ntt, \
+        blue_bumper_min_area_ntt, \
+        red_bumper_min_h_ntt, \
+        red_bumper_max_h_ntt, \
+        red_bumper_min_s_ntt, \
+        red_bumper_max_s_ntt, \
+        red_bumper_min_v_ntt, \
+        red_bumper_max_v_ntt, \
+        red_bumper_min_area_ntt)
 
     '''
     print('*****')
@@ -1195,6 +1308,25 @@ def main():
                 fuel_min_area = int(fuel_min_area_ntt.get())
                 fuel_min_extent = float(fuel_min_extent_ntt.get())
 
+                #Bumper Detection
+                original_bumper_image = img.copy()
+                bumper_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                bumper_img_HSV = cv2.cvtColor(original_image, cv2.COLOR_BGR2HSV)
+
+                red_bumper_min_h = int(red_bumper_min_h_ntt.get())
+                red_bumper_min_s = int(red_bumper_min_s_ntt.get())
+                red_bumper_min_v = int(red_bumper_min_v_ntt.get())
+                red_bumper_max_h = int(red_bumper_max_h_ntt.get())
+                red_bumper_max_s = int(red_bumper_max_s_ntt.get())
+                red_bumper_max_v = int(red_bumper_max_v_ntt.get())
+                red_bumper_min_area = int(red_bumper_min_area_ntt.get())
+                blue_bumper_min_h = int(blue_bumper_min_h_ntt.get())
+                blue_bumper_min_s = int(blue_bumper_min_s_ntt.get())
+                blue_bumper_min_v = int(blue_bumper_min_v_ntt.get())
+                blue_bumper_max_h = int(blue_bumper_max_h_ntt.get())
+                blue_bumper_max_s = int(blue_bumper_max_s_ntt.get())
+                blue_bumper_max_v = int(blue_bumper_max_v_ntt.get())
+                blue_bumper_min_area = int(blue_bumper_min_area_ntt.get())
 
             '''
             # filter colors in HSV space
