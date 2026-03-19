@@ -239,20 +239,20 @@ def file_write_fuel(file,
         print({'VISION': dict(parser['VISION'])})
 
 def file_write_bumper(file,
-                b_min_h,
-                b_min_s,
-                b_min_v,
-                b_max_h,
-                b_max_s,
-                b_max_v,
-                b_min_area,
                 r_min_h,
                 r_min_s,
                 r_min_v,
                 r_max_h,
                 r_max_s,
                 r_max_v,
-                r_min_area):
+                r_min_area,
+                b_min_h,
+                b_min_s,
+                b_min_v,
+                b_max_h,
+                b_max_s,
+                b_max_v,
+                b_min_area):
     #write the stuff to save bumper vals
     parser = configparser.ConfigParser()
 
@@ -394,6 +394,41 @@ def file_read_fuel(parser, configfile_failure_ntt):
             print({'VISION': dict(parser['VISION'])})
         configfile_failure_ntt.set(False) # config file recreated
 
+def file_read_bumper(parser, configfile_failure_ntt):
+    config_exists = os.path.isfile(BUMPER_CONFIG_FILE_DEFAULT)
+    if config_exists == True:
+        parser.read(BUMPER_CONFIG_FILE_DEFAULT)
+        configfile_failure_ntt.set(False) #if it works mark no error
+        print('read bumper file:')
+        print({'BUMPER': dict(parser['BUMPER'])})
+    else: # re-create config and container file to default
+        configfile_failure_ntt.set(True) # set error for config file
+        
+        parser.add_section('BUMPER')
+        parser.set('BUMPER', BUMPER_CONFIG_FILE_TOPIC_NAME, str(BUMPER_CONFIG_FILE_DEFAULT))
+        parser.set('BUMPER', RED_BUMPER_MIN_H_TOPIC_NAME, str(round(RED_BUMPER_MIN_H)))
+        parser.set('BUMPER', RED_BUMPER_MIN_S_TOPIC_NAME, str(round(RED_BUMPER_MIN_S)))
+        parser.set('BUMPER', RED_BUMPER_MIN_V_TOPIC_NAME, str(round(RED_BUMPER_MIN_V)))
+        parser.set('BUMPER', RED_BUMPER_MAX_H_TOPIC_NAME, str(round(RED_BUMPER_MAX_H)))
+        parser.set('BUMPER', RED_BUMPER_MAX_S_TOPIC_NAME, str(round(RED_BUMPER_MAX_S)))
+        parser.set('BUMPER', RED_BUMPER_MAX_V_TOPIC_NAME, str(round(RED_BUMPER_MAX_V)))
+        parser.set('BUMPER', RED_BUMPER_MIN_A_TOPIC_NAME, str(round(RED_BUMPER_MIN_A)))
+        parser.set('BUMPER', BLUE_BUMPER_MIN_H_TOPIC_NAME, str(round(BLUE_BUMPER_MIN_H)))
+        parser.set('BUMPER', BLUE_BUMPER_MIN_S_TOPIC_NAME, str(round(BLUE_BUMPER_MIN_S)))
+        parser.set('BUMPER', BLUE_BUMPER_MIN_V_TOPIC_NAME, str(round(BLUE_BUMPER_MIN_V)))
+        parser.set('BUMPER', BLUE_BUMPER_MAX_H_TOPIC_NAME, str(round(BLUE_BUMPER_MAX_H)))
+        parser.set('BUMPER', BLUE_BUMPER_MAX_S_TOPIC_NAME, str(round(BLUE_BUMPER_MAX_S)))
+        parser.set('BUMPER', BLUE_BUMPER_MAX_V_TOPIC_NAME, str(round(BLUE_BUMPER_MAX_V)))
+        parser.set('BUMPER', BLUE_BUMPER_MIN_A_TOPIC_NAME, str(round(BLUE_BUMPER_MIN_A)))
+
+
+
+        with open("/home/pi/" + BUMPER_CONFIG_FILE_DEFAULT, 'w') as config:
+            parser.write(config)
+            print('wrote fuel file:')
+            print({'BUMPER': dict(parser['BUMPER'])})
+        configfile_failure_ntt.set(False) # config file recreated
+
 def file_write_gen(brightness, contrast, ae_mode, man_exposure_time, y_offset, x_offset):
 
     parser = configparser.ConfigParser()
@@ -485,6 +520,60 @@ def nt_update_fuel(config,
     max_v.set(mx_v)
     min_area.set(mi_a)
     min_extent.set(mi_ex)
+
+def nt_update_bumper(config,
+              configfile,
+              r_min_h,
+              r_min_s,
+              r_min_v,
+              r_max_h,
+              r_max_s,
+              r_max_v,
+              r_min_area,
+              b_min_h,
+              b_min_s,
+              b_min_v,
+              b_max_h,
+              b_max_s,
+              b_max_v,
+              b_min_area):
+    # sync the stuff in the file with matching values in the file
+
+    print('dump bumper file:')
+    print({'BUMPER': dict(config['BUMPER'])})
+
+    r_mi_h = float(config.get('BUMPER', RED_BUMPER_MIN_H_TOPIC_NAME))
+    r_mi_s = float(config.get('BUMPER', RED_BUMPER_MIN_S_TOPIC_NAME))
+    r_mi_v = float(config.get('BUMPER', RED_BUMPER_MIN_V_TOPIC_NAME))
+    r_mx_h = float(config.get('BUMPER', RED_BUMPER_MAX_H_TOPIC_NAME))
+    r_mx_s = float(config.get('BUMPER', RED_BUMPER_MAX_S_TOPIC_NAME))
+    r_mx_v = float(config.get('BUMPER', RED_BUMPER_MAX_V_TOPIC_NAME))
+    r_mi_a = float(config.get('BUMPER', RED_BUMPER_MIN_A_TOPIC_NAME))
+
+    b_mi_h = float(config.get('BUMPER', BLUE_BUMPER_MIN_H_TOPIC_NAME))
+    b_mi_s = float(config.get('BUMPER', BLUE_BUMPER_MIN_S_TOPIC_NAME))
+    b_mi_v = float(config.get('BUMPER', BLUE_BUMPER_MIN_V_TOPIC_NAME))
+    b_mx_h = float(config.get('BUMPER', BLUE_BUMPER_MAX_H_TOPIC_NAME))
+    b_mx_s = float(config.get('BUMPER', BLUE_BUMPER_MAX_S_TOPIC_NAME))
+    b_mx_v = float(config.get('BUMPER', BLUE_BUMPER_MAX_V_TOPIC_NAME))
+    b_mi_a = float(config.get('BUMPER', BLUE_BUMPER_MIN_A_TOPIC_NAME))
+
+    #configfile.set(str(config.get('VISION', FUEL_CONFIG_FILE_TOPIC_NAME)))
+    r_min_h.set(r_mi_h)
+    r_min_s.set(r_mi_s)
+    r_min_v.set(r_mi_v)
+    r_max_h.set(r_mx_h)
+    r_max_s.set(r_mx_s)
+    r_max_v.set(r_mx_v)
+    r_min_area.set(r_mi_a)
+
+    b_min_h.set(b_mi_h)
+    b_min_s.set(b_mi_s)
+    b_min_v.set(b_mi_v)
+    b_max_h.set(b_mx_h)
+    b_max_s.set(b_mx_s)
+    b_max_v.set(b_mx_v)
+    b_min_area.set(b_mi_a)
 
 def nt_update_gen(type,
                   config,
@@ -615,20 +704,20 @@ def bumper_config_save(config):
     if config.save.get() == True:
         print("saving...")
         file_write_bumper(config.fileName.get(), \
-            config.BminH.get(), \
-            config.BmaxH.get(), \
-            config.BminS.get(), \
-            config.BmaxS.get(), \
-            config.BminV.get(), \
-            config.BmaxV.get(), \
-            config.BminA.get(), \
             config.RminH.get(), \
-            config.RmaxH.get(), \
             config.RminS.get(), \
-            config.RmaxS.get(), \
             config.RminV.get(), \
+            config.RmaxH.get(), \
+            config.RmaxS.get(), \
             config.RmaxV.get(), \
-            config.RminA.get())
+            config.RminA.get(), \
+            config.BminH.get(), \
+            config.BminS.get(), \
+            config.BminV.get(), \
+            config.BmaxH.get(), \
+            config.BmaxS.get(), \
+            config.BmaxV.get(), \
+            config.BminA.get())
         config.save.set(False)
 
 class orientation(Enum):
@@ -779,6 +868,7 @@ def main():
     config_tag = configparser.ConfigParser()
     config_fuel = configparser.ConfigParser()
     config_gen = configparser.ConfigParser()
+    config_bumper = configparser.ConfigParser()
 
     fuelConfigSave = Fuel_Config_Save_Class(fuel_config_savefile_ntt, \
         fuelconfigfile_ntt, \
@@ -826,6 +916,23 @@ def main():
     nt_update_fuel(config_fuel, fuelconfigfile_ntt, \
         fuel_min_h_ntt, fuel_min_s_ntt, fuel_min_v_ntt, fuel_max_h_ntt, fuel_max_s_ntt, fuel_max_v_ntt, \
         fuel_min_area_ntt, fuel_min_extent_ntt)
+    
+    file_read_bumper(config_bumper, configfilefail_ntt)
+    nt_update_bumper(config_bumper, bumperconfigfile_ntt, \
+       red_bumper_min_h_ntt, \
+       red_bumper_min_s_ntt, \
+       red_bumper_min_v_ntt, \
+       red_bumper_max_h_ntt, \
+       red_bumper_max_s_ntt, \
+       red_bumper_max_v_ntt, \
+       red_bumper_min_area_ntt, \
+       blue_bumper_min_h_ntt, \
+       blue_bumper_min_s_ntt, \
+       blue_bumper_min_v_ntt, \
+       blue_bumper_max_h_ntt, \
+       blue_bumper_max_s_ntt, \
+       blue_bumper_max_v_ntt, \
+       blue_bumper_min_area_ntt)
 
     file_read_gen(config_gen, configfilefail_ntt)
     nt_update_gen(vision_type, config_gen, tag_brightness_ntt, tag_contrast_ntt, tag_ae_ntt, tag_exposure_ntt, \
@@ -852,6 +959,20 @@ def main():
     fuel_max_area = 1000
     fuel_min_extent = float(config_fuel.get('VISION', FUEL_MIN_EXTENT_TOPIC_NAME))
 
+    r_bumper_min_h = int(config_bumper.get('BUMPER', RED_BUMPER_MIN_H_TOPIC_NAME))
+    r_bumper_min_s = int(config_bumper.get('BUMPER', RED_BUMPER_MIN_S_TOPIC_NAME))
+    r_bumper_min_v = int(config_bumper.get('BUMPER', RED_BUMPER_MIN_V_TOPIC_NAME))
+    r_bumper_max_h = int(config_bumper.get('BUMPER', RED_BUMPER_MAX_H_TOPIC_NAME))
+    r_bumper_max_s = int(config_bumper.get('BUMPER', RED_BUMPER_MAX_S_TOPIC_NAME))
+    r_bumper_max_v = int(config_bumper.get('BUMPER', RED_BUMPER_MAX_V_TOPIC_NAME))
+    r_bumper_min_area = int(config_bumper.get('BUMPER', RED_BUMPER_MIN_A_TOPIC_NAME))
+    b_bumper_min_h = int(config_bumper.get('BUMPER', BLUE_BUMPER_MIN_H_TOPIC_NAME))
+    b_bumper_min_s = int(config_bumper.get('BUMPER', BLUE_BUMPER_MIN_S_TOPIC_NAME))
+    b_bumper_min_v = int(config_bumper.get('BUMPER', BLUE_BUMPER_MIN_V_TOPIC_NAME))
+    b_bumper_max_h = int(config_bumper.get('BUMPER', BLUE_BUMPER_MAX_H_TOPIC_NAME))
+    b_bumper_max_s = int(config_bumper.get('BUMPER', BLUE_BUMPER_MAX_S_TOPIC_NAME))
+    b_bumper_max_v = int(config_bumper.get('BUMPER', BLUE_BUMPER_MAX_V_TOPIC_NAME))
+    b_bumper_min_area = int(config_bumper.get('BUMPER', BLUE_BUMPER_MIN_A_TOPIC_NAME))
     #set up pose estimation
     ''' old way for camera calibration
     calib_data_path = "calib_data"
@@ -932,6 +1053,8 @@ def main():
     else:
         outputStreamFuel = CameraServer.putVideo("fuel image", cam_config['width'], cam_config['height'])
         outputMask = CameraServer.putVideo("mask image", cam_config['width'], cam_config['height'])
+        outputRedBumperMask = CameraServer.putVideo("Red bumper mask image", cam_config['width'], cam_config['height'])
+        outputBlueBumperMask = CameraServer.putVideo("Blue bumper mask image", cam_config['width'], cam_config['height'])
 
     # Allocating new images is very expensive, always try to preallocate
     #img = np.zeros(shape=(cam_config['height'], cam_config['width'], 3), dtype=np.uint8)
@@ -1298,6 +1421,10 @@ def main():
 
             db_n = debug_fuel_ntt.get()
 
+            original_image = img.copy()
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            img_HSV = cv2.cvtColor(original_image, cv2.COLOR_BGR2HSV)
+
             if db_n == True:
                 fuel_min_h = int(fuel_min_h_ntt.get())
                 fuel_min_s = int(fuel_min_s_ntt.get())
@@ -1308,10 +1435,7 @@ def main():
                 fuel_min_area = int(fuel_min_area_ntt.get())
                 fuel_min_extent = float(fuel_min_extent_ntt.get())
 
-                #Bumper Detection
-                original_bumper_image = img.copy()
-                bumper_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                bumper_img_HSV = cv2.cvtColor(original_image, cv2.COLOR_BGR2HSV)
+            #BUMPERS!!!
 
                 red_bumper_min_h = int(red_bumper_min_h_ntt.get())
                 red_bumper_min_s = int(red_bumper_min_s_ntt.get())
@@ -1328,6 +1452,35 @@ def main():
                 blue_bumper_max_v = int(blue_bumper_max_v_ntt.get())
                 blue_bumper_min_area = int(blue_bumper_min_area_ntt.get())
 
+                red_low = np.array([red_bumper_min_h, red_bumper_min_s, red_bumper_min_v])
+                red_high = np.array([red_bumper_max_h, red_bumper_max_s, red_bumper_max_v])
+                red_mask = cv2.inRange(img_HSV, red_low, red_high)
+
+                blue_low = np.array([blue_bumper_min_h, blue_bumper_min_s, blue_bumper_min_v])
+                blue_high = np.array([blue_bumper_max_h, blue_bumper_max_s, blue_bumper_max_v])
+                blue_mask = cv2.inRange(img_HSV, blue_low, blue_high)
+
+                masks = [red_mask, blue_mask]
+                for i in range(len(masks)):
+                    color, useless = cv2.findContours(masks[i], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                    colorSorted = sorted(color, key=lambda x: cv2.contourArea(x), reverse=True)
+
+                    bumpers = []
+                    bumper_contours = []
+                    max_bumper_contour = None
+                    for y in colorSorted:
+
+                        area = cv2.contourArea(y)
+                        if area > red_bumper_min_area:
+                            r_x,r_y,r_w,r_h = cv2.boundingRect(y)
+                            max_bumper_contour = y
+
+                            if max_bumper_contour is not None:
+                                r_x,r_y,r_w,r_h = cv2.boundingRect(max_bumper_contour)
+                                center_x = r_x + int(round(r_w / 2))
+                                center_y = r_y + int(round(r_h / 2))
+
+
             '''
             # filter colors in HSV space
             img_HSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
@@ -1335,9 +1488,8 @@ def main():
             # even though image capture format is RGB888, images are stored as BGR
             # for HSV filtering / masking / detecting, convert input image from BGR to HSV
             # but for displaying the image, convert input image from BGR to RGB
-            original_image = img.copy()
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            img_HSV = cv2.cvtColor(original_image, cv2.COLOR_BGR2HSV)
+            
+
 
 
             # only keep pixels with colors that match the range in color_config
@@ -1531,8 +1683,11 @@ def main():
                     #cv2.circle(img, (center_x, center_y), 6, (255,0,255), -1)
                     #cv2.drawContours(img, [max_contour], 0, (200,0,0), 4)
                     fuel_config_save(fuelConfigSave)
+                    bumper_config_save(bumperConfigSave)
                     outputStreamFuel.putFrame(img) # send to dashboard
                     outputMask.putFrame(img_mask) # send to dashboard
+                    outputRedBumperMask.putFrame(red_mask) #TODO: add bumper mask
+                    outputBlueBumperMask.putFrame(blue_mask) #TODO: add bumper mask
                     if fuel_record_data_ntt.get() == True:
                         fuel_data = f'{area:4.1f},{extent:2.1f},{center_x},{center_y},{distance:3.1f},{angle:2.1f}'
                         with open('fuel_data.txt', 'a') as f:
@@ -1543,8 +1698,12 @@ def main():
 
             if db_n == True:
                 fuel_config_save(fuelConfigSave)
+                bumper_config_save(bumperConfigSave)
                 outputStreamFuel.putFrame(img) # send to dashboard
                 outputMask.putFrame(img_mask) # send to dashboard
+                outputRedBumperMask.putFrame(red_mask) #TODO: add bumper mask
+                outputRedBumperMask.putFrame(blue_mask) #TODO: add bumper mask
+
 
                     
         else:
