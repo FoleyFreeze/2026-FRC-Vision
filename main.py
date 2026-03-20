@@ -1,3 +1,338 @@
+from cscore import CameraServer
+import ntcore
+from ntcore import NetworkTableInstance
+from enum import Enum
+import configparser
+import robotpy_apriltag
+import cv2
+import numpy as np
+import time
+import os
+import os.path
+import ast
+import math
+import struct
+from math import log10, floor
+import json
+from picamera2 import Picamera2
+import libcamera
+from libcamera import controls
+import threading
+from pprint import *
+import sys
+import pickle
+
+
+
+
+X_RES = 320
+Y_RES = 240
+UPTIME_UPDATE_INTERVAL = 1
+TEMP_UPDATE_INTERVAL= 30
+DEBUG_MODE_DEFAULT = False
+THREADS_DEFAULT = 3
+DECIMATE_DEFAULT = 1.0
+BLUR_DEFAULT = 0.0
+REFINE_EDGES_DEFAULT = True
+SHARPENING_DEFAULT = 0.25
+APRILTAG_DEBUG_MODE_DEFAULT = False
+DECISION_MARGIN_DEFAULT = 125
+CAMERA_CAL_FILE_NAME = "MultiMatrix.npz.PiGS.640.480" # "MultiMatrix.npz" #"MultiMatrix.npz.PiGS.320.240" #"MultiMatrix.npz" #MultiMatrix.npz.PiGS.640.480" # "MultiMatrix.npz.PiGS.320.240" # "MultiMatrix.npz.webcam.320.240" # "MultiMatrix.npz.webcam.640.480"
+THREADS_TOPIC_NAME = "/Vision/Threads"
+DECIMATE_TOPIC_NAME = "/Vision/Decimate"
+BLUR_TOPIC_NAME = "/Vision/Blur"
+REFINE_EDGES_TOPIC_NAME = "/Vision/Edge Refine"
+SHARPENING_TOPIC_NAME = "/Vision/Sharpening"
+APRILTAG_DEBUG_MODE_TOPIC_NAME = "/Vision/April Tag Debug"
+DECISION_MARGIN_MIN_TOPIC_NAME = "/Vision/Decision Margin Min"
+DECISION_MARGIN_MAX_TOPIC_NAME = "/Vision/Decision Margin Max"
+TAG_CONFIG_FILE_TOPIC_NAME = "/Vision/Tag Config File"
+#ACTIVE_TOPIC_NAME = "/Vision/Active"
+TAG_ACTIVE_TOPIC_NAME = "/Vision/Tag Active" 
+FUEL_ACTIVE_TOPIC_NAME = "/Vision/Fuel Active" 
+POSE_DATA_RAW_TOPIC_NAME = "Tag Pose Data Bytes" #cannot say /Vision becuase we already do in NTGetRaw
+FUEL_POSE_DATA_RAW_TOPIC_NAME = "Fuel Pose Data Bytes" #cannot say /Vision becuase we already do in NTGetRaw
+POSE_DATA_STRING_TOPIC_NAME_HEADER ="/Vision/Pose Data Header"
+FUEL_POSE_DATA_STRING_TOPIC_NAME_HEADER = "/Vision/Fuel Pose Data Header"
+POSE_DATA_STRING_TOPIC_NAME_DATA_TRANSLATION ="/Vision/Pose Data Trans"
+POSE_DATA_STRING_TOPIC_NAME_DATA_ROTATION ="/Vision/Pose Data Rot"
+TAG_PI_TEMP_TOPIC_NAME = "/Vision/Tag Temperature"
+FUEL_PI_TEMP_TOPIC_NAME = "/Vision/Fuel Temperature"
+RIO_TIME_TOPIC_NAME = "/Vision/RIO Time"
+
+Z_IN_TOPIC_NAME = "/Vision/Z In"
+FUEL_MIN_HUE_TOPIC_NAME = "/Vision/Fuel Min Hue"
+FUEL_MIN_SAT_TOPIC_NAME = "/Vision/Fuel Min Sat"
+FUEL_MIN_VAL_TOPIC_NAME = "/Vision/Fuel Min Val"
+FUEL_MAX_HUE_TOPIC_NAME = "/Vision/Fuel Max Hue"
+FUEL_MAX_SAT_TOPIC_NAME = "/Vision/Fuel Max Sat"
+FUEL_MAX_VAL_TOPIC_NAME = "/Vision/Fuel Max Val"
+FUEL_CONFIG_FILE_TOPIC_NAME = "/Vision/Fuel Config File"
+FUEL_CONFIG_FILE_DEFAULT = "fuel_config.ini"
+TAG_CONFIG_FILE_DEFAULT = "tag_config.ini"
+GEN_CONFIG_FILE_DEFAULT = "gen_config.ini"
+BUMPER_CONFIG_FILE_TOPIC_NAME = "/Vision/Bumper Config File"
+BUMPER_CONFIG_FILE_DEFAULT = "bumper_config.ini"
+FUEL_MIN_HUE = 0
+FUEL_MIN_SAT = 0
+FUEL_MIN_VAL = 0
+FUEL_MAX_HUE = 179
+FUEL_MAX_SAT = 255
+FUEL_MAX_VAL = 255
+TAG_ENABLE_TOPIC_NAME = "/Vision/Tag Enable"
+FUEL_ENABLE_TOPIC_NAME = "/Vision/Fuel Enable"
+TOP_LINE_DIST_FROM_TOP = 0.15
+BOTTOM_LINE_DIST_FROM_TOP = 0.7
+FUEL_MIN_AREA_TOPIC_NAME = "/Vision/Fuel Min Area"
+FUEL_MIN_AREA = 44 #275
+FUEL_MIN_EXTENT_TOPIC_NAME = "/Vision/Fuel Min Extent"
+FUEL_MIN_EXTENT = 0.65
+FUEL_ANGLE_TOPIC_NAME = "/Vision/Fuel Angle"
+WRITE_TAG_IMAGE = False
+TAG_RECORD_ENABLE_TOPIC_NAME = "/Vision/Tag Record"
+TAG_RECORD_REMOVE_TOPIC_NAME = "/Vision/Tag Remove"
+FUEL_RECORD_DATA_TOPIC_NAME = "/Vision/Fuel Record"
+FUEL_X_OFFSET = 0
+FUEL_Y_OFFSET = 5
+FPS_NUM_SAMPLES = 200 #after this number of images the fps average is calulated
+TAG_CROP_TOP_TOPIC_NAME = "/Vision/Tag Crop Top"
+TAG_CROP_BOTTOM_TOPIC_NAME = "/Vision/Tag Crop Bottom"
+TAG_CROP_TOP_DEFAULT = 0 # this is a %; default to no crop
+TAG_CROP_BOTTOM_DEFAULT = 100 # this is a %; default to no crop
+FUEL_NUM_PIXELS_FROM_CENTER_BLANK = 15
+TAG_BRIGHTNESS_TOPIC_NAME = "/Vision/Tag Brightness"
+FUEL_BRIGHTNESS_TOPIC_NAME = "/Vision/Fuel Brightness"
+
+BRIGHTNESS_DEFAULT = 0.0
+TAG_CONTRAST_TOPIC_NAME = "/Vision/Tag Contrast"
+FUEL_CONTRAST_TOPIC_NAME = "/Vision/Fuel Contrast"
+CONTRAST_DEFAULT = 1.0
+
+FUEL_AMOUNT_DETECT_MODE_TOPIC_NAME = "/Vision/Fuel Amount Detection Mode"
+FUEL_AMOUNT_DETECT_MODE_DEFAULT = 2
+
+GEN_FUEL_Y_OFFSET_TOPIC_NAME = "/Vision/Fuel Y Offset"
+GEN_FUEL_X_OFFSET_TOPIC_NAME = "/Vision/Fuel X Offset"
+
+
+TAG_ERRORS_TOPIC_NAME = "/Vision/Tag Corrected Errors"
+TAG_ERRORS_DEFAULT = 0
+TAG_AE_TOPIC_NAME = "/Vision/Tag Auto Exposure"
+FUEL_AE_TOPIC_NAME = "/Vision/Fuel Auto Exposure"
+AE_DEFAULT = True
+TAG_EXPOSURE_TOPIC_NAME = "/Vision/Tag Manual Exposure" # only used if AE_TOPIC_NAME is disabled
+FUEL_EXPOSURE_TOPIC_NAME = "/Vision/Fuel Manual Exposure" # only used if AE_TOPIC_NAME is disabled
+EXPOSURE_DEFAULT = 1000 # in microseconds - total guess as default 
+POSE_DATA_X_DEG_TOPIC_NAME = "/Vision/X Deg"
+POSE_DATA_Y_DEG_TOPIC_NAME = "/Vision/Y Deg"
+POSE_DATA_Z_DEG_TOPIC_NAME = "/Vision/Z Deg"
+POSE_DATA_X_IN_TOPIC_NAME = "/Vision/X In"
+POSE_DATA_Y_IN_TOPIC_NAME = "/Vision/Y In"
+TAG_DETECTED_ID_TOPIC_NAME = "/Vision/Tag Id"
+TAG_DETECTED_DM_TOPIC_NAME = "/Vision/Tag DM"
+TAG_DETECTED_ERRORS_TOPIC_NAME = "/Vision/Tag Errors"
+
+CIRCLE_AREA_MIN = 200
+
+
+RED_BUMPER_MIN_H_TOPIC_NAME = "/Vision/Bumper/Red Min H"
+RED_BUMPER_MIN_S_TOPIC_NAME = "/Vision/Bumper/Red Min S"
+RED_BUMPER_MIN_V_TOPIC_NAME = "/Vision/Bumper/Red Min V"
+RED_BUMPER_MAX_H_TOPIC_NAME = "/Vision/Bumper/Red Max H"
+RED_BUMPER_MAX_S_TOPIC_NAME = "/Vision/Bumper/Red Max S"
+RED_BUMPER_MAX_V_TOPIC_NAME = "/Vision/Bumper/Red Max V"
+RED_BUMPER_MIN_A_TOPIC_NAME = "/Vision/Bumper/Red Min Area"
+RED_BUMPER_MIN_H = 0
+RED_BUMPER_MIN_S = 0
+RED_BUMPER_MIN_V = 0
+RED_BUMPER_MAX_H = 179
+RED_BUMPER_MAX_S = 255
+RED_BUMPER_MAX_V = 255
+RED_BUMPER_MIN_A = 0
+
+BLUE_BUMPER_MIN_H_TOPIC_NAME = "/Vision/Bumper/Blue Min H"
+BLUE_BUMPER_MIN_S_TOPIC_NAME = "/Vision/Bumper/Blue Min S"
+BLUE_BUMPER_MIN_V_TOPIC_NAME = "/Vision/Bumper/Blue Min V"
+BLUE_BUMPER_MAX_H_TOPIC_NAME = "/Vision/Bumper/Blue Max H"
+BLUE_BUMPER_MAX_S_TOPIC_NAME = "/Vision/Bumper/Blue Max S"
+BLUE_BUMPER_MAX_V_TOPIC_NAME = "/Vision/Bumper/Blue Max V"
+BLUE_BUMPER_MIN_A_TOPIC_NAME = "/Vision/Bumper/Blue Min Area"
+BLUE_BUMPER_MIN_H = 0
+BLUE_BUMPER_MIN_S = 0
+BLUE_BUMPER_MIN_V = 0
+BLUE_BUMPER_MAX_H = 179
+BLUE_BUMPER_MAX_S = 255
+BLUE_BUMPER_MAX_V = 255
+BLUE_BUMPER_MIN_A = 0
+class NTConnectType(Enum):
+    SERVER = 1
+    CLIENT = 2
+class NTGetString:
+    def __init__(self, stringTopic: ntcore.StringTopic, init, default, failsafe):
+        self.init = init
+        self.default = default
+        self.failsafe = failsafe
+        # start subscribing; the return value must be retained.
+        # the parameter is the default value if no value is available when get() is called
+        self.stringTopic = stringTopic.getEntry(failsafe)
+
+        self.stringTopic.setDefault(default)
+        self.stringTopic.set(init)
+
+    def get(self):
+        return self.stringTopic.get(self.failsafe)
+
+    def set(self, string):
+        self.stringTopic.set(string)
+
+    def unpublish(self):
+        # you can stop publishing while keeping the subscriber alive
+        self.stringTopic.unpublish()
+
+    def close(self):
+        # stop subscribing/publishing
+        self.stringTopic.close()
+class NTGetBoolean:
+    def __init__(self, boolTopic: ntcore.BooleanTopic, init, default, failsafe):
+        self.init = init
+        self.default = default
+        self.failsafe = failsafe
+
+        # start subscribing; the return value must be retained.
+        # the parameter is the default value if no value is available when get() is called
+        self.boolTopic = boolTopic.getEntry(failsafe)
+
+        self.boolTopic.setDefault(default)
+        self.boolTopic.set(init)
+
+    def get(self):
+        return self.boolTopic.get(self.failsafe)
+    def set(self, boolean):
+        self.boolTopic.set(boolean)
+    def unpublish(self):
+        # you can stop publishing while keeping the subscriber alive
+        self.boolTopic.unpublish()
+
+    def close(self):
+        # stop subscribing/publishing
+        self.boolTopic.close()
+class NTGetDouble:
+    def __init__(self, dblTopic: ntcore.DoubleTopic, init, default, failsafe):
+        self.init = init
+        self.default = default
+        self.failsafe = failsafe
+        # start subscribing; the return value must be retained.
+        # the parameter is the default value if no value is available when get() is called
+        self.dblTopic = dblTopic.getEntry(failsafe)
+        self.dblTopic.setDefault(default)
+        self.dblTopic.set(init)
+
+    def get(self):
+        return self.dblTopic.get(self.failsafe)
+
+    def set(self, double):
+        self.dblTopic.set(double)
+
+    def unpublish(self):
+        # you can stop publishing while keeping the subscriber alive
+        self.dblTopic.unpublish()
+
+    def close(self):
+        # stop subscribing/publishing
+        self.dblTopic.close()
+class NTGetRaw:
+    def __init__(self, ntinst, topicname, init, default, failsafe):
+        self.init = init
+        self.default = default
+        self.failsafe = failsafe
+        self.table = ntinst.getTable("/Vision")
+
+        self.pub = self.table.getRawTopic(topicname).publish("raw")
+
+    def set(self, raw):
+        self.pub.set(raw)
+
+    def unpublish(self):
+        # you can stop publishing while keeping the subscriber alive
+        self.pub.unpublish()
+
+    def close(self):
+        # stop subscribing/publishing
+        self.pub.close()
+#!/usr/bin/python3
+
+# These two are only needed for the demo code below the FrameServer class.
+import time
+from threading import Condition, Thread
+
+from picamera2 import Picamera2
+
+
+class FrameServer:
+    def __init__(self, picam2, stream='main'):
+        """A simple class that can serve up frames from one of the Picamera2's configured streams to multiple other threads.
+
+        Pass in the Picamera2 object and the name of the stream for which you want
+        to serve up frames.
+        """
+        self._picam2 = picam2
+        self._stream = stream
+        self._array = None
+        self._condition = Condition()
+        self._running = True
+        self._count = 0
+        self._thread = Thread(target=self._thread_func, daemon=True)
+
+    @property
+    def count(self):
+        """A count of the number of frames received."""
+        return self._count
+
+    def start(self):
+        """To start the FrameServer, you will also need to start the Picamera2 object."""
+        self._thread.start()
+
+    def stop(self):
+        """To stop the FrameServer
+
+        First stop any client threads (that might be
+        blocked in wait_for_frame), then call this stop method. Don't stop the
+        Picamera2 object until the FrameServer has been stopped.
+        """
+        self._running = False
+        self._thread.join()
+
+    def _thread_func(self):
+        count = 0
+        while self._running:
+            array = self._picam2.capture_array(self._stream)
+            self._count += 1
+            ''' # uncomment this block to see exposure time for images
+            count += 1
+            if (count > 1000):
+                print(self._picam2.capture_metadata()['ExposureTime'])
+                count = 0
+            '''
+            with self._condition:
+                self._array = array
+                self._condition.notify_all()
+
+    def wait_for_frame(self, previous=None):
+        """You may optionally pass in the previous frame that you got last time you called this function.
+
+        This will guarantee that you don't get duplicate frames
+        returned in the event of spurious wake-ups, and it may even return more
+        quickly in the case where a new frame has already arrived.
+        """
+        with self._condition:
+            if previous is not None and self._array is not previous:
+                return self._array
+            while True:
+                self._condition.wait()
+                if self._array is not previous:
+                    return self._array
+
+
 class PieceData:
     def __init__(self, num, rio_time, image_time, type, distance, angle):
         self.image_num = num
@@ -959,20 +1294,20 @@ def main():
     fuel_max_area = 1000
     fuel_min_extent = float(config_fuel.get('VISION', FUEL_MIN_EXTENT_TOPIC_NAME))
 
-    r_bumper_min_h = int(config_bumper.get('BUMPER', RED_BUMPER_MIN_H_TOPIC_NAME))
-    r_bumper_min_s = int(config_bumper.get('BUMPER', RED_BUMPER_MIN_S_TOPIC_NAME))
-    r_bumper_min_v = int(config_bumper.get('BUMPER', RED_BUMPER_MIN_V_TOPIC_NAME))
-    r_bumper_max_h = int(config_bumper.get('BUMPER', RED_BUMPER_MAX_H_TOPIC_NAME))
-    r_bumper_max_s = int(config_bumper.get('BUMPER', RED_BUMPER_MAX_S_TOPIC_NAME))
-    r_bumper_max_v = int(config_bumper.get('BUMPER', RED_BUMPER_MAX_V_TOPIC_NAME))
-    r_bumper_min_area = int(config_bumper.get('BUMPER', RED_BUMPER_MIN_A_TOPIC_NAME))
-    b_bumper_min_h = int(config_bumper.get('BUMPER', BLUE_BUMPER_MIN_H_TOPIC_NAME))
-    b_bumper_min_s = int(config_bumper.get('BUMPER', BLUE_BUMPER_MIN_S_TOPIC_NAME))
-    b_bumper_min_v = int(config_bumper.get('BUMPER', BLUE_BUMPER_MIN_V_TOPIC_NAME))
-    b_bumper_max_h = int(config_bumper.get('BUMPER', BLUE_BUMPER_MAX_H_TOPIC_NAME))
-    b_bumper_max_s = int(config_bumper.get('BUMPER', BLUE_BUMPER_MAX_S_TOPIC_NAME))
-    b_bumper_max_v = int(config_bumper.get('BUMPER', BLUE_BUMPER_MAX_V_TOPIC_NAME))
-    b_bumper_min_area = int(config_bumper.get('BUMPER', BLUE_BUMPER_MIN_A_TOPIC_NAME))
+    red_bumper_min_h = int(config_bumper.get('BUMPER', RED_BUMPER_MIN_H_TOPIC_NAME))
+    red_bumper_min_s = int(config_bumper.get('BUMPER', RED_BUMPER_MIN_S_TOPIC_NAME))
+    red_bumper_min_v = int(config_bumper.get('BUMPER', RED_BUMPER_MIN_V_TOPIC_NAME))
+    red_bumper_max_h = int(config_bumper.get('BUMPER', RED_BUMPER_MAX_H_TOPIC_NAME))
+    red_bumper_max_s = int(config_bumper.get('BUMPER', RED_BUMPER_MAX_S_TOPIC_NAME))
+    red_bumper_max_v = int(config_bumper.get('BUMPER', RED_BUMPER_MAX_V_TOPIC_NAME))
+    red_bumper_min_area = int(config_bumper.get('BUMPER', RED_BUMPER_MIN_A_TOPIC_NAME))
+    blue_bumper_min_h = int(config_bumper.get('BUMPER', BLUE_BUMPER_MIN_H_TOPIC_NAME))
+    blue_bumper_min_s = int(config_bumper.get('BUMPER', BLUE_BUMPER_MIN_S_TOPIC_NAME))
+    blue_bumper_min_v = int(config_bumper.get('BUMPER', BLUE_BUMPER_MIN_V_TOPIC_NAME))
+    blue_bumper_max_h = int(config_bumper.get('BUMPER', BLUE_BUMPER_MAX_H_TOPIC_NAME))
+    blue_bumper_max_s = int(config_bumper.get('BUMPER', BLUE_BUMPER_MAX_S_TOPIC_NAME))
+    blue_bumper_max_v = int(config_bumper.get('BUMPER', BLUE_BUMPER_MAX_V_TOPIC_NAME))
+    blue_bumper_min_area = int(config_bumper.get('BUMPER', BLUE_BUMPER_MIN_A_TOPIC_NAME))
     #set up pose estimation
     ''' old way for camera calibration
     calib_data_path = "calib_data"
@@ -1452,34 +1787,45 @@ def main():
                 blue_bumper_max_v = int(blue_bumper_max_v_ntt.get())
                 blue_bumper_min_area = int(blue_bumper_min_area_ntt.get())
 
-                red_low = np.array([red_bumper_min_h, red_bumper_min_s, red_bumper_min_v])
-                red_high = np.array([red_bumper_max_h, red_bumper_max_s, red_bumper_max_v])
-                red_mask = cv2.inRange(img_HSV, red_low, red_high)
+            red_low = np.array([red_bumper_min_h, red_bumper_min_s, red_bumper_min_v])
+            red_high = np.array([red_bumper_max_h, red_bumper_max_s, red_bumper_max_v])
+            red_mask = cv2.inRange(img_HSV, red_low, red_high)
 
-                blue_low = np.array([blue_bumper_min_h, blue_bumper_min_s, blue_bumper_min_v])
-                blue_high = np.array([blue_bumper_max_h, blue_bumper_max_s, blue_bumper_max_v])
-                blue_mask = cv2.inRange(img_HSV, blue_low, blue_high)
+            blue_low = np.array([blue_bumper_min_h, blue_bumper_min_s, blue_bumper_min_v])
+            blue_high = np.array([blue_bumper_max_h, blue_bumper_max_s, blue_bumper_max_v])
+            blue_mask = cv2.inRange(img_HSV, blue_low, blue_high)
 
-                masks = [red_mask, blue_mask]
-                for i in range(len(masks)):
-                    color, useless = cv2.findContours(masks[i], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-                    colorSorted = sorted(color, key=lambda x: cv2.contourArea(x), reverse=True)
+            masks = [red_mask, blue_mask]
+            min_areas = [red_bumper_min_area, blue_bumper_min_area]
+            low_left = []
+            low_right = []
+            for i in range(len(masks)):
+                color, useless = cv2.findContours(masks[i], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                colorSorted = sorted(color, key=lambda x: cv2.contourArea(x), reverse=True)
 
-                    bumpers = []
-                    bumper_contours = []
-                    max_bumper_contour = None
-                    for y in colorSorted:
+                bumpers = []
+                bumper_contours = []
+                max_bumper_contour = None
+                for y in colorSorted:
 
-                        area = cv2.contourArea(y)
-                        if area > red_bumper_min_area:
-                            r_x,r_y,r_w,r_h = cv2.boundingRect(y)
-                            max_bumper_contour = y
+                    area = cv2.contourArea(y)
+                    if area > min_areas[i]:
+                        r_x,r_y,r_w,r_h = cv2.boundingRect(y)
+                        max_bumper_contour = y
 
-                            if max_bumper_contour is not None:
-                                r_x,r_y,r_w,r_h = cv2.boundingRect(max_bumper_contour)
-                                center_x = r_x + int(round(r_w / 2))
-                                center_y = r_y + int(round(r_h / 2))
-
+                        if max_bumper_contour is not None:
+                            r_x,r_y,r_w,r_h = cv2.boundingRect(max_bumper_contour)
+                            if i == 0:
+                                cv2.rectangle(img,(r_x,0), (r_x+r_w, r_y+r_h), (0,0,255), 2)
+                            else:
+                                cv2.rectangle(img,(r_x,0), (r_x+r_w, r_y+r_h), (255,0,0), 2)
+                            cv2.rectangle(img_HSV,(r_x,0), (r_x+r_w, r_y+r_h), (0,0,0), -1)
+                            low_left.append((r_x, (r_y + r_h)))
+                            low_right.append(((r_x + r_w), (r_y + r_h)))
+                                
+            #    for i in range(len(low_left)):                
+            #        cv2.circle(img, low_left[i], 8, (255, 0, 255), -1)
+            #        cv2.circle(img, low_right[i], 8, (255, 255, 0), -1)
 
             '''
             # filter colors in HSV space
@@ -1566,7 +1912,6 @@ def main():
                                     orient = orientation.HORIZONTAL
                                 else:
                                     orient = orientation.VERTICAL
-                            
                             max_contour = y
 
                             ''' if amount_view_type == 0:
@@ -1617,7 +1962,6 @@ def main():
                                 r_x,r_y,r_w,r_h = cv2.boundingRect(max_contour)
                                 center_x = r_x + int(round(r_w / 2)) + FUEL_X_OFFSET
                                 center_y = r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET
-
                                 if (center_y > 17  and center_y < 240*2):
                                     '''if (center_y > 240*2): # at really close, can't see the bottom, aspect ratio goes way up 
                                         extent_min = 0.25
@@ -1643,9 +1987,7 @@ def main():
                                     angle = (1 / px_per_deg) * (center_x - w/2)
                                     yVal = center_y
                                     xVal = center_x
-
                                     if (distance >= 0 and distance < 150) and (angle >= -20 and angle < 20): # sanity check'''
-                                
                                         fuel_data.append(Fuel_Data_Class(distance, angle, orient, amount))
                                         
                                         #End of contour loop
@@ -1669,7 +2011,7 @@ def main():
                 pose_data = piece_pose_data_bytes(image_num, rio_time, image_time, fuel_data)
                 fuel_pose_data_bytes_ntt.set(pose_data)
                 NetworkTableInstance.getDefault().flush()
-
+                frame_rate_ntt.set(round(fps_av, 1))   
                 if db_n == True:
                     txt = piece_pose_data_string(image_num, rio_time, image_time, fuel_data)
                     fuel_pose_data_string_header_ntt.set(txt)
@@ -1679,15 +2021,15 @@ def main():
                     fuel_y_val_ntt.set(yVal)   
                     fuel_x_val_ntt.set(xVal)   
                     fuel_orientation.set(orient.name)    
-                    frame_rate_ntt.set(round(fps_av, 1))          
+                    #frame_rate_ntt.set(round(fps_av, 1))          
                     #cv2.circle(img, (center_x, center_y), 6, (255,0,255), -1)
                     #cv2.drawContours(img, [max_contour], 0, (200,0,0), 4)
                     fuel_config_save(fuelConfigSave)
                     bumper_config_save(bumperConfigSave)
                     outputStreamFuel.putFrame(img) # send to dashboard
                     outputMask.putFrame(img_mask) # send to dashboard
-                    outputRedBumperMask.putFrame(red_mask) #TODO: add bumper mask
-                    outputBlueBumperMask.putFrame(blue_mask) #TODO: add bumper mask
+                    outputRedBumperMask.putFrame(red_mask)
+                    outputBlueBumperMask.putFrame(blue_mask)
                     if fuel_record_data_ntt.get() == True:
                         fuel_data = f'{area:4.1f},{extent:2.1f},{center_x},{center_y},{distance:3.1f},{angle:2.1f}'
                         with open('fuel_data.txt', 'a') as f:
@@ -1701,8 +2043,8 @@ def main():
                 bumper_config_save(bumperConfigSave)
                 outputStreamFuel.putFrame(img) # send to dashboard
                 outputMask.putFrame(img_mask) # send to dashboard
-                outputRedBumperMask.putFrame(red_mask) #TODO: add bumper mask
-                outputRedBumperMask.putFrame(blue_mask) #TODO: add bumper mask
+                outputRedBumperMask.putFrame(red_mask)
+                outputBlueBumperMask.putFrame(blue_mask)
 
 
                     
