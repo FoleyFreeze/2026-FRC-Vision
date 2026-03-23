@@ -333,341 +333,6 @@ class FrameServer:
                     return self._array
 
 
-from cscore import CameraServer
-import ntcore
-from ntcore import NetworkTableInstance
-from enum import Enum
-import configparser
-import robotpy_apriltag
-import cv2
-import numpy as np
-import time
-import os
-import os.path
-import ast
-import math
-import struct
-from math import log10, floor
-import json
-from picamera2 import Picamera2
-import libcamera
-from libcamera import controls
-import threading
-from pprint import *
-import sys
-import pickle
-
-
-
-
-X_RES = 320
-Y_RES = 240
-UPTIME_UPDATE_INTERVAL = 1
-TEMP_UPDATE_INTERVAL= 30
-DEBUG_MODE_DEFAULT = False
-THREADS_DEFAULT = 3
-DECIMATE_DEFAULT = 1.0
-BLUR_DEFAULT = 0.0
-REFINE_EDGES_DEFAULT = True
-SHARPENING_DEFAULT = 0.25
-APRILTAG_DEBUG_MODE_DEFAULT = False
-DECISION_MARGIN_DEFAULT = 125
-CAMERA_CAL_FILE_NAME = "MultiMatrix.npz.PiGS.640.480" # "MultiMatrix.npz" #"MultiMatrix.npz.PiGS.320.240" #"MultiMatrix.npz" #MultiMatrix.npz.PiGS.640.480" # "MultiMatrix.npz.PiGS.320.240" # "MultiMatrix.npz.webcam.320.240" # "MultiMatrix.npz.webcam.640.480"
-THREADS_TOPIC_NAME = "/Vision/Threads"
-DECIMATE_TOPIC_NAME = "/Vision/Decimate"
-BLUR_TOPIC_NAME = "/Vision/Blur"
-REFINE_EDGES_TOPIC_NAME = "/Vision/Edge Refine"
-SHARPENING_TOPIC_NAME = "/Vision/Sharpening"
-APRILTAG_DEBUG_MODE_TOPIC_NAME = "/Vision/April Tag Debug"
-DECISION_MARGIN_MIN_TOPIC_NAME = "/Vision/Decision Margin Min"
-DECISION_MARGIN_MAX_TOPIC_NAME = "/Vision/Decision Margin Max"
-TAG_CONFIG_FILE_TOPIC_NAME = "/Vision/Tag Config File"
-#ACTIVE_TOPIC_NAME = "/Vision/Active"
-TAG_ACTIVE_TOPIC_NAME = "/Vision/Tag Active" 
-FUEL_ACTIVE_TOPIC_NAME = "/Vision/Fuel Active" 
-POSE_DATA_RAW_TOPIC_NAME = "Tag Pose Data Bytes" #cannot say /Vision becuase we already do in NTGetRaw
-FUEL_POSE_DATA_RAW_TOPIC_NAME = "Fuel Pose Data Bytes" #cannot say /Vision becuase we already do in NTGetRaw
-POSE_DATA_STRING_TOPIC_NAME_HEADER ="/Vision/Pose Data Header"
-FUEL_POSE_DATA_STRING_TOPIC_NAME_HEADER = "/Vision/Fuel Pose Data Header"
-POSE_DATA_STRING_TOPIC_NAME_DATA_TRANSLATION ="/Vision/Pose Data Trans"
-POSE_DATA_STRING_TOPIC_NAME_DATA_ROTATION ="/Vision/Pose Data Rot"
-TAG_PI_TEMP_TOPIC_NAME = "/Vision/Tag Temperature"
-FUEL_PI_TEMP_TOPIC_NAME = "/Vision/Fuel Temperature"
-RIO_TIME_TOPIC_NAME = "/Vision/RIO Time"
-
-Z_IN_TOPIC_NAME = "/Vision/Z In"
-FUEL_MIN_HUE_TOPIC_NAME = "/Vision/Fuel Min Hue"
-FUEL_MIN_SAT_TOPIC_NAME = "/Vision/Fuel Min Sat"
-FUEL_MIN_VAL_TOPIC_NAME = "/Vision/Fuel Min Val"
-FUEL_MAX_HUE_TOPIC_NAME = "/Vision/Fuel Max Hue"
-FUEL_MAX_SAT_TOPIC_NAME = "/Vision/Fuel Max Sat"
-FUEL_MAX_VAL_TOPIC_NAME = "/Vision/Fuel Max Val"
-FUEL_CONFIG_FILE_TOPIC_NAME = "/Vision/Fuel Config File"
-FUEL_CONFIG_FILE_DEFAULT = "fuel_config.ini"
-TAG_CONFIG_FILE_DEFAULT = "tag_config.ini"
-GEN_CONFIG_FILE_DEFAULT = "gen_config.ini"
-BUMPER_CONFIG_FILE_TOPIC_NAME = "/Vision/Bumper Config File"
-BUMPER_CONFIG_FILE_DEFAULT = "bumper_config.ini"
-FUEL_MIN_HUE = 0
-FUEL_MIN_SAT = 0
-FUEL_MIN_VAL = 0
-FUEL_MAX_HUE = 179
-FUEL_MAX_SAT = 255
-FUEL_MAX_VAL = 255
-TAG_ENABLE_TOPIC_NAME = "/Vision/Tag Enable"
-FUEL_ENABLE_TOPIC_NAME = "/Vision/Fuel Enable"
-TOP_LINE_DIST_FROM_TOP = 0.15
-BOTTOM_LINE_DIST_FROM_TOP = 0.7
-FUEL_MIN_AREA_TOPIC_NAME = "/Vision/Fuel Min Area"
-FUEL_MIN_AREA = 44 #275
-FUEL_MIN_EXTENT_TOPIC_NAME = "/Vision/Fuel Min Extent"
-FUEL_MIN_EXTENT = 0.65
-FUEL_ANGLE_TOPIC_NAME = "/Vision/Fuel Angle"
-WRITE_TAG_IMAGE = False
-TAG_RECORD_ENABLE_TOPIC_NAME = "/Vision/Tag Record"
-TAG_RECORD_REMOVE_TOPIC_NAME = "/Vision/Tag Remove"
-FUEL_RECORD_DATA_TOPIC_NAME = "/Vision/Fuel Record"
-FUEL_X_OFFSET = 0
-FUEL_Y_OFFSET = 5
-FPS_NUM_SAMPLES = 200 #after this number of images the fps average is calulated
-TAG_CROP_TOP_TOPIC_NAME = "/Vision/Tag Crop Top"
-TAG_CROP_BOTTOM_TOPIC_NAME = "/Vision/Tag Crop Bottom"
-TAG_CROP_TOP_DEFAULT = 0 # this is a %; default to no crop
-TAG_CROP_BOTTOM_DEFAULT = 100 # this is a %; default to no crop
-FUEL_NUM_PIXELS_FROM_CENTER_BLANK = 15
-TAG_BRIGHTNESS_TOPIC_NAME = "/Vision/Tag Brightness"
-FUEL_BRIGHTNESS_TOPIC_NAME = "/Vision/Fuel Brightness"
-
-BRIGHTNESS_DEFAULT = 0.0
-TAG_CONTRAST_TOPIC_NAME = "/Vision/Tag Contrast"
-FUEL_CONTRAST_TOPIC_NAME = "/Vision/Fuel Contrast"
-CONTRAST_DEFAULT = 1.0
-
-FUEL_AMOUNT_DETECT_MODE_TOPIC_NAME = "/Vision/Fuel Amount Detection Mode"
-FUEL_AMOUNT_DETECT_MODE_DEFAULT = 2
-
-GEN_FUEL_Y_OFFSET_TOPIC_NAME = "/Vision/Fuel Y Offset"
-GEN_FUEL_X_OFFSET_TOPIC_NAME = "/Vision/Fuel X Offset"
-
-
-TAG_ERRORS_TOPIC_NAME = "/Vision/Tag Corrected Errors"
-TAG_ERRORS_DEFAULT = 0
-TAG_AE_TOPIC_NAME = "/Vision/Tag Auto Exposure"
-FUEL_AE_TOPIC_NAME = "/Vision/Fuel Auto Exposure"
-AE_DEFAULT = True
-TAG_EXPOSURE_TOPIC_NAME = "/Vision/Tag Manual Exposure" # only used if AE_TOPIC_NAME is disabled
-FUEL_EXPOSURE_TOPIC_NAME = "/Vision/Fuel Manual Exposure" # only used if AE_TOPIC_NAME is disabled
-EXPOSURE_DEFAULT = 1000 # in microseconds - total guess as default 
-POSE_DATA_X_DEG_TOPIC_NAME = "/Vision/X Deg"
-POSE_DATA_Y_DEG_TOPIC_NAME = "/Vision/Y Deg"
-POSE_DATA_Z_DEG_TOPIC_NAME = "/Vision/Z Deg"
-POSE_DATA_X_IN_TOPIC_NAME = "/Vision/X In"
-POSE_DATA_Y_IN_TOPIC_NAME = "/Vision/Y In"
-TAG_DETECTED_ID_TOPIC_NAME = "/Vision/Tag Id"
-TAG_DETECTED_DM_TOPIC_NAME = "/Vision/Tag DM"
-TAG_DETECTED_ERRORS_TOPIC_NAME = "/Vision/Tag Errors"
-
-CIRCLE_AREA_MIN = 200
-
-
-RED_BUMPER_MIN_H_TOPIC_NAME = "/Vision/Bumper/Red Min H"
-RED_BUMPER_MIN_S_TOPIC_NAME = "/Vision/Bumper/Red Min S"
-RED_BUMPER_MIN_V_TOPIC_NAME = "/Vision/Bumper/Red Min V"
-RED_BUMPER_MAX_H_TOPIC_NAME = "/Vision/Bumper/Red Max H"
-RED_BUMPER_MAX_S_TOPIC_NAME = "/Vision/Bumper/Red Max S"
-RED_BUMPER_MAX_V_TOPIC_NAME = "/Vision/Bumper/Red Max V"
-RED_BUMPER_MIN_A_TOPIC_NAME = "/Vision/Bumper/Red Min Area"
-RED_BUMPER_MIN_H = 0
-RED_BUMPER_MIN_S = 0
-RED_BUMPER_MIN_V = 0
-RED_BUMPER_MAX_H = 179
-RED_BUMPER_MAX_S = 255
-RED_BUMPER_MAX_V = 255
-RED_BUMPER_MIN_A = 0
-
-BLUE_BUMPER_MIN_H_TOPIC_NAME = "/Vision/Bumper/Blue Min H"
-BLUE_BUMPER_MIN_S_TOPIC_NAME = "/Vision/Bumper/Blue Min S"
-BLUE_BUMPER_MIN_V_TOPIC_NAME = "/Vision/Bumper/Blue Min V"
-BLUE_BUMPER_MAX_H_TOPIC_NAME = "/Vision/Bumper/Blue Max H"
-BLUE_BUMPER_MAX_S_TOPIC_NAME = "/Vision/Bumper/Blue Max S"
-BLUE_BUMPER_MAX_V_TOPIC_NAME = "/Vision/Bumper/Blue Max V"
-BLUE_BUMPER_MIN_A_TOPIC_NAME = "/Vision/Bumper/Blue Min Area"
-BLUE_BUMPER_MIN_H = 0
-BLUE_BUMPER_MIN_S = 0
-BLUE_BUMPER_MIN_V = 0
-BLUE_BUMPER_MAX_H = 179
-BLUE_BUMPER_MAX_S = 255
-BLUE_BUMPER_MAX_V = 255
-BLUE_BUMPER_MIN_A = 0
-class NTConnectType(Enum):
-    SERVER = 1
-    CLIENT = 2
-class NTGetString:
-    def __init__(self, stringTopic: ntcore.StringTopic, init, default, failsafe):
-        self.init = init
-        self.default = default
-        self.failsafe = failsafe
-        # start subscribing; the return value must be retained.
-        # the parameter is the default value if no value is available when get() is called
-        self.stringTopic = stringTopic.getEntry(failsafe)
-
-        self.stringTopic.setDefault(default)
-        self.stringTopic.set(init)
-
-    def get(self):
-        return self.stringTopic.get(self.failsafe)
-
-    def set(self, string):
-        self.stringTopic.set(string)
-
-    def unpublish(self):
-        # you can stop publishing while keeping the subscriber alive
-        self.stringTopic.unpublish()
-
-    def close(self):
-        # stop subscribing/publishing
-        self.stringTopic.close()
-class NTGetBoolean:
-    def __init__(self, boolTopic: ntcore.BooleanTopic, init, default, failsafe):
-        self.init = init
-        self.default = default
-        self.failsafe = failsafe
-
-        # start subscribing; the return value must be retained.
-        # the parameter is the default value if no value is available when get() is called
-        self.boolTopic = boolTopic.getEntry(failsafe)
-
-        self.boolTopic.setDefault(default)
-        self.boolTopic.set(init)
-
-    def get(self):
-        return self.boolTopic.get(self.failsafe)
-    def set(self, boolean):
-        self.boolTopic.set(boolean)
-    def unpublish(self):
-        # you can stop publishing while keeping the subscriber alive
-        self.boolTopic.unpublish()
-
-    def close(self):
-        # stop subscribing/publishing
-        self.boolTopic.close()
-class NTGetDouble:
-    def __init__(self, dblTopic: ntcore.DoubleTopic, init, default, failsafe):
-        self.init = init
-        self.default = default
-        self.failsafe = failsafe
-        # start subscribing; the return value must be retained.
-        # the parameter is the default value if no value is available when get() is called
-        self.dblTopic = dblTopic.getEntry(failsafe)
-        self.dblTopic.setDefault(default)
-        self.dblTopic.set(init)
-
-    def get(self):
-        return self.dblTopic.get(self.failsafe)
-
-    def set(self, double):
-        self.dblTopic.set(double)
-
-    def unpublish(self):
-        # you can stop publishing while keeping the subscriber alive
-        self.dblTopic.unpublish()
-
-    def close(self):
-        # stop subscribing/publishing
-        self.dblTopic.close()
-class NTGetRaw:
-    def __init__(self, ntinst, topicname, init, default, failsafe):
-        self.init = init
-        self.default = default
-        self.failsafe = failsafe
-        self.table = ntinst.getTable("/Vision")
-
-        self.pub = self.table.getRawTopic(topicname).publish("raw")
-
-    def set(self, raw):
-        self.pub.set(raw)
-
-    def unpublish(self):
-        # you can stop publishing while keeping the subscriber alive
-        self.pub.unpublish()
-
-    def close(self):
-        # stop subscribing/publishing
-        self.pub.close()
-#!/usr/bin/python3
-
-# These two are only needed for the demo code below the FrameServer class.
-import time
-from threading import Condition, Thread
-
-from picamera2 import Picamera2
-
-
-class FrameServer:
-    def __init__(self, picam2, stream='main'):
-        """A simple class that can serve up frames from one of the Picamera2's configured streams to multiple other threads.
-
-        Pass in the Picamera2 object and the name of the stream for which you want
-        to serve up frames.
-        """
-        self._picam2 = picam2
-        self._stream = stream
-        self._array = None
-        self._condition = Condition()
-        self._running = True
-        self._count = 0
-        self._thread = Thread(target=self._thread_func, daemon=True)
-
-    @property
-    def count(self):
-        """A count of the number of frames received."""
-        return self._count
-
-    def start(self):
-        """To start the FrameServer, you will also need to start the Picamera2 object."""
-        self._thread.start()
-
-    def stop(self):
-        """To stop the FrameServer
-
-        First stop any client threads (that might be
-        blocked in wait_for_frame), then call this stop method. Don't stop the
-        Picamera2 object until the FrameServer has been stopped.
-        """
-        self._running = False
-        self._thread.join()
-
-    def _thread_func(self):
-        count = 0
-        while self._running:
-            array = self._picam2.capture_array(self._stream)
-            self._count += 1
-            ''' # uncomment this block to see exposure time for images
-            count += 1
-            if (count > 1000):
-                print(self._picam2.capture_metadata()['ExposureTime'])
-                count = 0
-            '''
-            with self._condition:
-                self._array = array
-                self._condition.notify_all()
-
-    def wait_for_frame(self, previous=None):
-        """You may optionally pass in the previous frame that you got last time you called this function.
-
-        This will guarantee that you don't get duplicate frames
-        returned in the event of spurious wake-ups, and it may even return more
-        quickly in the case where a new frame has already arrived.
-        """
-        with self._condition:
-            if previous is not None and self._array is not previous:
-                return self._array
-            while True:
-                self._condition.wait()
-                if self._array is not previous:
-                    return self._array
-
-
 class PieceData:
     def __init__(self, num, rio_time, image_time, type, distance, angle):
         self.image_num = num
@@ -1525,6 +1190,8 @@ def main():
     blue_bumper_max_v_ntt = NTGetDouble(ntinst.getDoubleTopic(BLUE_BUMPER_MAX_V_TOPIC_NAME), BLUE_BUMPER_MAX_V, BLUE_BUMPER_MAX_V, BLUE_BUMPER_MAX_V)
     blue_bumper_min_area_ntt = NTGetDouble(ntinst.getDoubleTopic(BLUE_BUMPER_MIN_A_TOPIC_NAME), BLUE_BUMPER_MIN_A, BLUE_BUMPER_MIN_A, BLUE_BUMPER_MIN_A)
 
+    bumper_y_crop_ntt = NTGetDouble(ntinst.getDoubleTopic("/Vision/Bumper/Bumper Y Crop"), 0.0, 0.0, 0.0)
+
     fuel_amount_detect_mode_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Fuel Amount Detection Mode"), False, False, False)
 
     gen_fuel_y_offset_ntt =  NTGetDouble(ntinst.getDoubleTopic(GEN_FUEL_Y_OFFSET_TOPIC_NAME), 0, 0, 0)
@@ -1643,7 +1310,7 @@ def main():
     blue_bumper_max_s = int(config_bumper.get('BUMPER', BLUE_BUMPER_MAX_S_TOPIC_NAME))
     blue_bumper_max_v = int(config_bumper.get('BUMPER', BLUE_BUMPER_MAX_V_TOPIC_NAME))
     blue_bumper_min_area = int(config_bumper.get('BUMPER', BLUE_BUMPER_MIN_A_TOPIC_NAME))
-    #set up pose estimation
+        #set up pose estimation
     ''' old way for camera calibration
     calib_data_path = "calib_data"
     calib_data = np.load(f"{calib_data_path}/{CAMERA_CAL_FILE_NAME}")
@@ -1817,9 +1484,9 @@ def main():
 
             else:
 
-                db_n = debug_fuel_ntt.get()
+                db_f = debug_fuel_ntt.get()
 
-                if db_n == True:
+                if db_f == True:
                     
                     if fuel_camera_refresh_nt_ntt.get() == True:
                         file_read_fuel(config_fuel, configfilefail_ntt)
@@ -1892,7 +1559,7 @@ def main():
                 else:
                     print(f'{seconds}')
             else:                
-                if db_n == True:
+                if db_f == True:
                     print(f'sec={seconds} fuel: ave fps={round(fps_av,0)} fps min={round(fps_av_min,0)} fps max={round(fps_av_max,0)}')
                     #print(f'FUEL_Y_OFFSET={FUEL_Y_OFFSET}')
                 else:
@@ -2089,13 +1756,13 @@ def main():
         
             #if fuel_enable_ntt.get() == True:
 
-            db_n = debug_fuel_ntt.get()
+            db_f = debug_fuel_ntt.get()
 
             original_image = img.copy()
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             img_HSV = cv2.cvtColor(original_image, cv2.COLOR_BGR2HSV)
 
-            if db_n == True:
+            if db_f == True:
                 fuel_min_h = int(fuel_min_h_ntt.get())
                 fuel_min_s = int(fuel_min_s_ntt.get())
                 fuel_min_v = int(fuel_min_v_ntt.get())
@@ -2135,6 +1802,7 @@ def main():
             low_left = []
             low_right = []
             for i in range(len(masks)):
+                masks[i][0:int(bumper_y_crop_ntt.get()), 0:w-1] = 0
                 color, useless = cv2.findContours(masks[i], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
                 colorSorted = sorted(color, key=lambda x: cv2.contourArea(x), reverse=True)
 
@@ -2347,7 +2015,7 @@ def main():
                 fuel_pose_data_bytes_ntt.set(pose_data)
                 NetworkTableInstance.getDefault().flush()
                 frame_rate_ntt.set(round(fps_av, 1))   
-                if db_n == True:
+                if db_f == True:
                     txt = piece_pose_data_string(image_num, rio_time, image_time, fuel_data)
                     fuel_pose_data_string_header_ntt.set(txt)
                     fuel_area_ntt.set(max_area)
@@ -2373,7 +2041,7 @@ def main():
                         fuel_record_data_ntt.set(False)
                     continue
 
-            if db_n == True:
+            if db_f == True:
                 fuel_config_save(fuelConfigSave)
                 bumper_config_save(bumperConfigSave)
                 outputStreamFuel.putFrame(img) # send to dashboard
