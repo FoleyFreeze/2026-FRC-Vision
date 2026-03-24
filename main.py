@@ -59,6 +59,39 @@ def fuel_regress_area(area):
         t *= area
     return r
 
+def bumper_regress_distance(y):
+    terms = [
+    7.0966516285127875e+002,
+    -6.9820722061739895e+000,
+    2.6039528430908565e-002,
+    -4.3279258459108625e-005,
+    2.6951712467292628e-008
+    ]
+    
+    t = 1
+    r = 0
+    for c in terms:
+        r += c * t
+        t *= y
+    return r
+
+def bumper_regress_px_per_deg(x):
+    terms = [
+    3.2123506921173828e+000,
+    1.6329201967055562e-002,
+    2.4644911299202409e-003,
+    -3.4974815498139850e-005,
+    1.2997423932059593e-007
+
+    ]   
+
+    t = 1
+    r = 0
+    for c in terms:
+        r += c * t
+        t *= x
+    return r
+
 def pose_data_string(sequence_num, rio_time, time, tags, tag_poses, nt_objects):
     string_header = ""
     string_header = f'num={sequence_num} t_rio={rio_time:1.3f} t_img={time:1.3f} len={len(tags)}'
@@ -215,7 +248,8 @@ def file_write_fuel(file,
                 max_s,
                 max_v,
                 min_area,
-                min_Ex):
+                min_Ex,
+                y_crop):
     
     parser = configparser.ConfigParser()
 
@@ -229,6 +263,7 @@ def file_write_fuel(file,
     parser.set('VISION', FUEL_MAX_VAL_TOPIC_NAME, str(round(max_v)))
     parser.set('VISION', FUEL_MIN_AREA_TOPIC_NAME, str(round(min_area)))
     parser.set('VISION', FUEL_MIN_EXTENT_TOPIC_NAME, str(round(min_Ex, 2)))
+    parser.set('VISION', FUEL_Y_CROP_TOPIC_NAME, str(round(y_crop)))
     
     #print(f'file={file} mh={str(min_h)} ms={str(min_s)} mv={str(min_v)} xh={str(max_h)} xs={str(max_s)} xv={str(max_v)}')
 
@@ -252,7 +287,8 @@ def file_write_bumper(file,
                 b_max_h,
                 b_max_s,
                 b_max_v,
-                b_min_area):
+                b_min_area,
+                b_y_crop):
     #write the stuff to save bumper vals
     parser = configparser.ConfigParser()
 
@@ -272,6 +308,7 @@ def file_write_bumper(file,
     parser.set('BUMPER', BLUE_BUMPER_MAX_S_TOPIC_NAME, str(round(b_max_s)))
     parser.set('BUMPER', BLUE_BUMPER_MAX_V_TOPIC_NAME, str(round(b_max_v)))
     parser.set('BUMPER', BLUE_BUMPER_MIN_A_TOPIC_NAME, str(round(b_min_area)))
+    parser.set('BUMPER', BUMPER_Y_CROP_TOPIC_NAME, str(round(b_y_crop)))
 
     with open(file, 'w') as config:
         parser.write(config)
@@ -386,6 +423,7 @@ def file_read_fuel(parser, configfile_failure_ntt):
         parser.set('VISION', FUEL_MAX_VAL_TOPIC_NAME, str(FUEL_MAX_VAL))
         parser.set('VISION', FUEL_MIN_AREA_TOPIC_NAME, str(FUEL_MIN_AREA))
         parser.set('VISION', FUEL_MIN_EXTENT_TOPIC_NAME, str(FUEL_MIN_EXTENT))
+        parser.set('VISION', FUEL_Y_CROP_TOPIC_NAME, str(FUEL_Y_CROP))
 
 
         with open("/home/pi/" + FUEL_CONFIG_FILE_DEFAULT, 'w') as config:
@@ -420,6 +458,7 @@ def file_read_bumper(parser, configfile_failure_ntt):
         parser.set('BUMPER', BLUE_BUMPER_MAX_S_TOPIC_NAME, str(round(BLUE_BUMPER_MAX_S)))
         parser.set('BUMPER', BLUE_BUMPER_MAX_V_TOPIC_NAME, str(round(BLUE_BUMPER_MAX_V)))
         parser.set('BUMPER', BLUE_BUMPER_MIN_A_TOPIC_NAME, str(round(BLUE_BUMPER_MIN_A)))
+        parser.set('BUMPER', BUMPER_Y_CROP_TOPIC_NAME, str(round(BUMPER_Y_CROP)))
 
 
 
@@ -494,7 +533,8 @@ def nt_update_fuel(config,
               max_s,
               max_v,
               min_area,
-              min_extent):
+              min_extent,
+              y_crop):
     # sync the stuff in the file with matching values in the file
 
     print('dump fuel file:')
@@ -510,6 +550,7 @@ def nt_update_fuel(config,
 
     mi_a = float(config.get('VISION', FUEL_MIN_AREA_TOPIC_NAME))
     mi_ex = float(config.get('VISION', FUEL_MIN_EXTENT_TOPIC_NAME))
+    y_cr = float(config.get('VISION', FUEL_Y_CROP_TOPIC_NAME))
 
     #configfile.set(str(config.get('VISION', FUEL_CONFIG_FILE_TOPIC_NAME)))
     min_h.set(mi_h)
@@ -520,6 +561,7 @@ def nt_update_fuel(config,
     max_v.set(mx_v)
     min_area.set(mi_a)
     min_extent.set(mi_ex)
+    y_crop.set(y_cr)
 
 def nt_update_bumper(config,
               configfile,
@@ -536,7 +578,8 @@ def nt_update_bumper(config,
               b_max_h,
               b_max_s,
               b_max_v,
-              b_min_area):
+              b_min_area,
+              b_y_crop):
     # sync the stuff in the file with matching values in the file
 
     print('dump bumper file:')
@@ -558,6 +601,8 @@ def nt_update_bumper(config,
     b_mx_v = float(config.get('BUMPER', BLUE_BUMPER_MAX_V_TOPIC_NAME))
     b_mi_a = float(config.get('BUMPER', BLUE_BUMPER_MIN_A_TOPIC_NAME))
 
+    b_y_cr = float(config.get('BUMPER', BUMPER_Y_CROP_TOPIC_NAME))
+
     #configfile.set(str(config.get('VISION', FUEL_CONFIG_FILE_TOPIC_NAME)))
     r_min_h.set(r_mi_h)
     r_min_s.set(r_mi_s)
@@ -574,6 +619,8 @@ def nt_update_bumper(config,
     b_max_s.set(b_mx_s)
     b_max_v.set(b_mx_v)
     b_min_area.set(b_mi_a)
+
+    b_y_crop.set(b_y_cr)
 
 def nt_update_gen(type,
                   config,
@@ -654,7 +701,7 @@ def remove_image_files(path):
             os.remove(file_path)  
 
 class Fuel_Config_Save_Class:
-    def __init__(self, save, fileName, minH, maxH, minS, maxS, minV, maxV, minA, minEx):
+    def __init__(self, save, fileName, minH, maxH, minS, maxS, minV, maxV, minA, minEx, YCrop):
         self.save = save
         self.fileName = fileName
         self.minH = minH
@@ -665,9 +712,10 @@ class Fuel_Config_Save_Class:
         self.maxV = maxV
         self.minA = minA
         self.minEx = minEx
+        self.YCrop = YCrop
 
 class Bumper_Config_Save_Class:
-    def __init__(self, save, fileName, BminH, BmaxH, BminS, BmaxS, BminV, BmaxV, BminA, RminH, RmaxH, RminS, RmaxS, RminV, RmaxV, RminA ):
+    def __init__(self, save, fileName, BminH, BmaxH, BminS, BmaxS, BminV, BmaxV, BminA, RminH, RmaxH, RminS, RmaxS, RminV, RmaxV, RminA, YCrop ):
         self.save = save
         self.fileName = fileName
         self.BminH = BminH
@@ -684,6 +732,7 @@ class Bumper_Config_Save_Class:
         self.RminV = RminV
         self.RmaxV = RmaxV
         self.RminA = RminA
+        self.YCrop = YCrop
 
 
 def fuel_config_save(config):
@@ -697,7 +746,8 @@ def fuel_config_save(config):
             config.maxS.get(), \
             config.maxV.get(), \
             config.minA.get(), \
-            config.minEx.get())
+            config.minEx.get(),\
+            config.YCrop.get())
         config.save.set(False)
 
 def bumper_config_save(config):
@@ -717,7 +767,8 @@ def bumper_config_save(config):
             config.BmaxH.get(), \
             config.BmaxS.get(), \
             config.BmaxV.get(), \
-            config.BminA.get())
+            config.BminA.get(), \
+            config.YCrop.get())
         config.save.set(False)
 
 class orientation(Enum):
@@ -732,6 +783,12 @@ class Fuel_Data_Class:
         self.angle = angle
         self.orientation = orientation
         self.amount = amount
+
+class Bumper_Data_Class:
+    def __init__(self, distance, angle):
+        self.distance = distance
+        self.angle = angle
+
 
 
 def main():
@@ -800,6 +857,7 @@ def main():
     fuel_enable_ntt = NTGetBoolean(ntinst.getBooleanTopic(FUEL_ENABLE_TOPIC_NAME), False, False, False)
     fuel_min_area_ntt = NTGetDouble(ntinst.getDoubleTopic(FUEL_MIN_AREA_TOPIC_NAME), FUEL_MIN_AREA, FUEL_MIN_AREA, FUEL_MIN_AREA)
     fuel_min_extent_ntt = NTGetDouble(ntinst.getDoubleTopic(FUEL_MIN_EXTENT_TOPIC_NAME), FUEL_MIN_EXTENT, FUEL_MIN_EXTENT, FUEL_MIN_EXTENT)
+    fuel_y_crop_ntt = NTGetDouble(ntinst.getDoubleTopic(FUEL_Y_CROP_TOPIC_NAME), FUEL_Y_CROP, FUEL_Y_CROP, FUEL_Y_CROP)
     fuel_angle_ntt = NTGetDouble(ntinst.getDoubleTopic(FUEL_ANGLE_TOPIC_NAME), 0.0, 0.0, 0.0)
     tag_record_ntt = NTGetBoolean(ntinst.getBooleanTopic(TAG_RECORD_ENABLE_TOPIC_NAME), False, False, False)
     tag_record_remove_ntt = NTGetBoolean(ntinst.getBooleanTopic(TAG_RECORD_REMOVE_TOPIC_NAME), False, False, False)
@@ -855,9 +913,7 @@ def main():
     blue_bumper_max_v_ntt = NTGetDouble(ntinst.getDoubleTopic(BLUE_BUMPER_MAX_V_TOPIC_NAME), BLUE_BUMPER_MAX_V, BLUE_BUMPER_MAX_V, BLUE_BUMPER_MAX_V)
     blue_bumper_min_area_ntt = NTGetDouble(ntinst.getDoubleTopic(BLUE_BUMPER_MIN_A_TOPIC_NAME), BLUE_BUMPER_MIN_A, BLUE_BUMPER_MIN_A, BLUE_BUMPER_MIN_A)
 
-    bumper_y_crop_ntt = NTGetDouble(ntinst.getDoubleTopic("/Vision/Bumper/Bumper Y Crop"), 0.0, 0.0, 0.0)
-
-    fuel_amount_detect_mode_ntt = NTGetBoolean(ntinst.getBooleanTopic("/Vision/Fuel Amount Detection Mode"), False, False, False)
+    bumper_y_crop_ntt = NTGetDouble(ntinst.getDoubleTopic(BUMPER_Y_CROP_TOPIC_NAME), 0.0, 0.0, 0.0)
 
     gen_fuel_y_offset_ntt =  NTGetDouble(ntinst.getDoubleTopic(GEN_FUEL_Y_OFFSET_TOPIC_NAME), 0, 0, 0)
     gen_fuel_x_offset_ntt =  NTGetDouble(ntinst.getDoubleTopic(GEN_FUEL_X_OFFSET_TOPIC_NAME), 0, 0, 0)
@@ -881,7 +937,8 @@ def main():
         fuel_min_v_ntt, \
         fuel_max_v_ntt, \
         fuel_min_area_ntt, \
-        fuel_min_extent_ntt)
+        fuel_min_extent_ntt, \
+        fuel_y_crop_ntt)
     
     bumperConfigSave = Bumper_Config_Save_Class(bumper_config_savefile_ntt, \
         bumperconfigfile_ntt, \
@@ -898,7 +955,8 @@ def main():
         red_bumper_max_s_ntt, \
         red_bumper_min_v_ntt, \
         red_bumper_max_v_ntt, \
-        red_bumper_min_area_ntt)
+        red_bumper_min_area_ntt, \
+        bumper_y_crop_ntt)
 
     '''
     print('*****')
@@ -917,7 +975,7 @@ def main():
     file_read_fuel(config_fuel, configfilefail_ntt)
     nt_update_fuel(config_fuel, fuelconfigfile_ntt, \
         fuel_min_h_ntt, fuel_min_s_ntt, fuel_min_v_ntt, fuel_max_h_ntt, fuel_max_s_ntt, fuel_max_v_ntt, \
-        fuel_min_area_ntt, fuel_min_extent_ntt)
+        fuel_min_area_ntt, fuel_min_extent_ntt, fuel_y_crop_ntt)
     
     file_read_bumper(config_bumper, configfilefail_ntt)
     nt_update_bumper(config_bumper, bumperconfigfile_ntt, \
@@ -934,7 +992,8 @@ def main():
        blue_bumper_max_h_ntt, \
        blue_bumper_max_s_ntt, \
        blue_bumper_max_v_ntt, \
-       blue_bumper_min_area_ntt)
+       blue_bumper_min_area_ntt, \
+       bumper_y_crop_ntt)
 
     file_read_gen(config_gen, configfilefail_ntt)
     nt_update_gen(vision_type, config_gen, tag_brightness_ntt, tag_contrast_ntt, tag_ae_ntt, tag_exposure_ntt, \
@@ -960,6 +1019,7 @@ def main():
     fuel_min_area = int(config_fuel.get('VISION', FUEL_MIN_AREA_TOPIC_NAME))
     fuel_max_area = 1000
     fuel_min_extent = float(config_fuel.get('VISION', FUEL_MIN_EXTENT_TOPIC_NAME))
+    fuel_y_crop = float(config_fuel.get('VISION', FUEL_Y_CROP_TOPIC_NAME))
 
     red_bumper_min_h = int(config_bumper.get('BUMPER', RED_BUMPER_MIN_H_TOPIC_NAME))
     red_bumper_min_s = int(config_bumper.get('BUMPER', RED_BUMPER_MIN_S_TOPIC_NAME))
@@ -975,6 +1035,7 @@ def main():
     blue_bumper_max_s = int(config_bumper.get('BUMPER', BLUE_BUMPER_MAX_S_TOPIC_NAME))
     blue_bumper_max_v = int(config_bumper.get('BUMPER', BLUE_BUMPER_MAX_V_TOPIC_NAME))
     blue_bumper_min_area = int(config_bumper.get('BUMPER', BLUE_BUMPER_MIN_A_TOPIC_NAME))
+    bumper_y_crop = int(config_bumper.get('BUMPER', BUMPER_Y_CROP_TOPIC_NAME))
         #set up pose estimation
     ''' old way for camera calibration
     calib_data_path = "calib_data"
@@ -1090,9 +1151,6 @@ def main():
     ae_mode = AE_DEFAULT
     exp_time = EXPOSURE_DEFAULT
     cam_settings_changed = False
-
-    amount_view_type = FUEL_AMOUNT_DETECT_MODE_DEFAULT
-
 
     FUEL_Y_OFFSET = int(config_gen.get('GENERAL', 'Y Offset'))
     FUEL_X_OFFSET = int(config_gen.get('GENERAL', 'X Offset'))
@@ -1423,6 +1481,7 @@ def main():
 
             db_f = debug_fuel_ntt.get()
 
+            img[0:int(fuel_y_crop), 0:w-1] = 0
             original_image = img.copy()
             img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             img_HSV = cv2.cvtColor(original_image, cv2.COLOR_BGR2HSV)
@@ -1436,6 +1495,7 @@ def main():
                 fuel_max_v = int(fuel_max_v_ntt.get())
                 fuel_min_area = int(fuel_min_area_ntt.get())
                 fuel_min_extent = float(fuel_min_extent_ntt.get())
+                fuel_y_crop = int(fuel_y_crop_ntt.get())
 
             #BUMPERS!!!
 
@@ -1453,6 +1513,7 @@ def main():
                 blue_bumper_max_s = int(blue_bumper_max_s_ntt.get())
                 blue_bumper_max_v = int(blue_bumper_max_v_ntt.get())
                 blue_bumper_min_area = int(blue_bumper_min_area_ntt.get())
+                bumper_y_crop = int(bumper_y_crop_ntt.get())
 
             red_low = np.array([red_bumper_min_h, red_bumper_min_s, red_bumper_min_v])
             red_high = np.array([red_bumper_max_h, red_bumper_max_s, red_bumper_max_v])
@@ -1462,34 +1523,39 @@ def main():
             blue_high = np.array([blue_bumper_max_h, blue_bumper_max_s, blue_bumper_max_v])
             blue_mask = cv2.inRange(img_HSV, blue_low, blue_high)
 
+            bumper_data = []
             masks = [red_mask, blue_mask]
             min_areas = [red_bumper_min_area, blue_bumper_min_area]
-            low_left = []
-            low_right = []
             for i in range(len(masks)):
-                masks[i][0:int(bumper_y_crop_ntt.get()), 0:w-1] = 0
+                masks[i][0:int(bumper_y_crop), 0:w-1] = 0
                 color, useless = cv2.findContours(masks[i], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
                 colorSorted = sorted(color, key=lambda x: cv2.contourArea(x), reverse=True)
-
-                bumpers = []
-                bumper_contours = []
-                max_bumper_contour = None
+                bumper_contour = None
                 for y in colorSorted:
 
                     area = cv2.contourArea(y)
                     if area > min_areas[i]:
                         r_x,r_y,r_w,r_h = cv2.boundingRect(y)
-                        max_bumper_contour = y
+                        bumper_contour = y
 
-                        if max_bumper_contour is not None:
-                            r_x,r_y,r_w,r_h = cv2.boundingRect(max_bumper_contour)
+                        if bumper_contour is not None:
+                            bumper_loc = (int(r_x + (0.5*r_w)), (r_y + r_h))
+                            r_x,r_y,r_w,r_h = cv2.boundingRect(bumper_contour)
                             if i == 0:
                                 cv2.rectangle(img,(r_x,0), (r_x+r_w, r_y+r_h), (0,0,255), 2)
                             else:
                                 cv2.rectangle(img,(r_x,0), (r_x+r_w, r_y+r_h), (255,0,0), 2)
                             cv2.rectangle(img_HSV,(r_x,0), (r_x+r_w, r_y+r_h), (0,0,0), -1)
-                            low_left.append((r_x, (r_y + r_h)))
-                            low_right.append(((r_x + r_w), (r_y + r_h)))
+
+                            if bumper_loc[1] >= 440: # don't see a full bumper this close, so y value for this distance is a bit off so force it to 0
+                                distance = 0
+                            else:
+                                distance = bumper_regress_distance(bumper_loc[1]) * 12 # get distance (inches) using y location
+                            px_per_deg = bumper_regress_px_per_deg(distance) # get pixel per degree
+                            angle = (1 / px_per_deg) * (bumper_loc[0] - w/2)
+                            if (distance >= 0 and distance < 150) and (angle >= -20 and angle < 20): # sanity check'''
+                                bumper_data.append(Bumper_Data_Class(distance, angle))
+
                                 
             #    for i in range(len(low_left)):                
             #        cv2.circle(img, low_left[i], 8, (255, 0, 255), -1)
@@ -1513,17 +1579,6 @@ def main():
             # fuel should appear in the region below the bottom of this region
             #   img_mask[0:260,0:640] = 0
             
-
-            view_types = ["Maximum Y View", "Aspect Ratio View", "Inverse BoundingRect Area View"]
-
-            #Fuel amount dectect mode button (delete me!!! + ntt)
-            mode_increment = fuel_amount_detect_mode_ntt.get()
-            if mode_increment == True:
-                amount_view_type += 1
-                if amount_view_type > len(view_types) - 1:
-                    amount_view_type = 0
-                print(view_types[amount_view_type])
-                fuel_amount_detect_mode_ntt.set(False)
             #cv2.putText(img, view_types[amount_view_type], (0, 22), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 220), 2) 
 
             
