@@ -486,11 +486,13 @@ def pose_data_string(sequence_num, rio_time, time, tags, tag_poses, nt_objects):
 
     return string_header, string_data_rot, string_data_t
 
-def piece_pose_data_string(sequence_num, rio_time, time, data):
-    string_header = f'num={sequence_num} t_rio={rio_time:1.3f} t_img={time:1.3f} objs={len(data)}  |'
-    for i in range(len(data)):
-        string_header += f'|  dist={data[i].distance:3.2f} angle={data[i].angle:3.2f} orient={data[i].orientation.name} amount={data[i].amount:3d}  '
-
+def piece_pose_data_string(sequence_num, rio_time, time, fuel_data, bumper_data):
+    string_header = f'num={sequence_num} t_rio={rio_time:1.3f} t_img={time:1.3f} type={obj_type.FUEL.name} objs={len(fuel_data)}  |'
+    for i in range(len(fuel_data)):
+        string_header += f'|  dist={fuel_data[i].distance:3.2f} angle={fuel_data[i].angle:3.2f} orient={fuel_data[i].orientation.name} amount={fuel_data[i].amount:3d}  '
+    string_header += f'|| type={obj_type.BUMPER.name} objs={len(bumper_data)}  |'
+    for i in range(len(bumper_data)):
+        string_header += f'|  dist={bumper_data[i].distance:3.2f} angle={bumper_data[i].angle:3.2f} team={bumper_data[i].alliance.name}  '
     return string_header
 
 
@@ -1022,13 +1024,15 @@ def pose_data_bytes(sequence_num, rio_time, image_time, tags, tag_poses):
         tag_pose += 1
     return byte_array
 
-def piece_pose_data_bytes(sequence_num, rio_time, image_time, data):
+def piece_pose_data_bytes(sequence_num, rio_time, image_time, fuel_data, bumper_data):
     byte_array = bytearray()
-    # start the array with sequence number, the RIO's time, image time
-    byte_array += struct.pack(">LffB", sequence_num, rio_time, image_time, len(data))
-    for i in range(len(data)):
-        byte_array += struct.pack("ffBH", data[i].distance, data[i].angle, data[i].orientation.value, data[i].amount) 
-
+    # start the array with sequence number, the RIO's time, image time, and add fuel object type
+    byte_array += struct.pack(">LffBB", sequence_num, rio_time, image_time, obj_type.FUEL.value, len(fuel_data))
+    for i in range(len(fuel_data)):
+        byte_array += struct.pack("ffBH", fuel_data[i].distance, fuel_data[i].angle, fuel_data[i].orientation.value, fuel_data[i].amount) 
+    byte_array += struct.pack("BB", obj_type.BUMPER.value, len(bumper_data))
+    for i in range(len(bumper_data)):
+        byte_array += struct.pack("ffB", bumper_data[i].distance, bumper_data[i].angle, bumper_data[i].alliance.value) 
     return byte_array
 
 def remove_image_files(path):
@@ -1108,11 +1112,19 @@ def bumper_config_save(config):
             config.YCrop.get())
         config.save.set(False)
 
+class obj_type(Enum):
+    FUEL = 1
+    BUMPER = 2
+
 class orientation(Enum):
     VERTICAL = 1
     HORIZONTAL = 2
     SQUARE = 3
     NONE = 4
+
+class teamColor(Enum):
+    RED = 1
+    BLUE = 2
 
 class Fuel_Data_Class:
     def __init__(self, distance, angle, orientation, amount):
@@ -1122,9 +1134,10 @@ class Fuel_Data_Class:
         self.amount = amount
 
 class Bumper_Data_Class:
-    def __init__(self, distance, angle):
+    def __init__(self, distance, angle, alliance):
         self.distance = distance
         self.angle = angle
+        self.alliance = alliance
 
 
 
@@ -1204,7 +1217,7 @@ def main():
     fuel_distance_ntt = NTGetDouble(ntinst.getDoubleTopic("/Vision/Fuel Distance"), 0.0, 0.0, 0.0)
     fuel_y_val_ntt = NTGetDouble(ntinst.getDoubleTopic("/Vision/Fuel Y Val"), 0.0, 0.0, 0.0)
     fuel_x_val_ntt = NTGetDouble(ntinst.getDoubleTopic("/Vision/Fuel X Val"), 0.0, 0.0, 0.0)
-    fuel_orientation = NTGetString(ntinst.getStringTopic("/Vision/Fuel Orient"), "", "", "")
+    fuel_orientation_ntt = NTGetString(ntinst.getStringTopic("/Vision/Fuel Orient"), "", "", "")
     tag_crop_x_ntt = NTGetDouble(ntinst.getDoubleTopic(TAG_CROP_TOP_TOPIC_NAME), TAG_CROP_TOP_DEFAULT, TAG_CROP_TOP_DEFAULT, TAG_CROP_TOP_DEFAULT)
     tag_crop_y_ntt = NTGetDouble(ntinst.getDoubleTopic(TAG_CROP_BOTTOM_TOPIC_NAME), TAG_CROP_BOTTOM_DEFAULT, TAG_CROP_BOTTOM_DEFAULT, TAG_CROP_BOTTOM_DEFAULT)
     tag_corrected_errors_ntt = NTGetDouble(ntinst.getDoubleTopic(TAG_ERRORS_TOPIC_NAME), TAG_ERRORS_DEFAULT, TAG_ERRORS_DEFAULT, TAG_ERRORS_DEFAULT)
@@ -1869,7 +1882,7 @@ def main():
                 colorSorted = sorted(color, key=lambda x: cv2.contourArea(x), reverse=True)
                 bumper_contour = None
                 for y in colorSorted:
-
+                    color = teamColor(i + 1)
                     area = cv2.contourArea(y)
                     if area > min_areas[i]:
                         r_x,r_y,r_w,r_h = cv2.boundingRect(y)
@@ -1891,8 +1904,8 @@ def main():
                             px_per_deg = bumper_regress_px_per_deg(distance) # get pixel per degree
                             angle = (1 / px_per_deg) * (bumper_loc[0] - w/2)
                             if (distance >= 0 and distance < 150) and (angle >= -20 and angle < 20): # sanity check'''
-                                bumper_data.append(Bumper_Data_Class(distance, angle))
-
+                                bumper_data.append(Bumper_Data_Class(distance, angle, color))
+            
                                 
             #    for i in range(len(low_left)):                
             #        cv2.circle(img, low_left[i], 8, (255, 0, 255), -1)
@@ -2053,7 +2066,7 @@ def main():
                                         #End of contour loop
                 
             #if max_contour is not None and not fuel_data:
-            if max_contour is not None and len(fuel_data) > 0:
+            if (len(fuel_data) > 0 or len(bumper_data) > 0):
                 image_num += 1
                 image_counter += 1
                 image_time = (time.process_time() - t1_time)
@@ -2068,19 +2081,20 @@ def main():
                     image_time_av_total = 0
                     image_counter = 0
 
-                pose_data = piece_pose_data_bytes(image_num, rio_time, image_time, fuel_data)
+                pose_data = piece_pose_data_bytes(image_num, rio_time, image_time, fuel_data, bumper_data)
                 fuel_pose_data_bytes_ntt.set(pose_data)
                 NetworkTableInstance.getDefault().flush()
                 frame_rate_ntt.set(round(fps_av, 1))   
                 if db_f == True:
-                    txt = piece_pose_data_string(image_num, rio_time, image_time, fuel_data)
+                    txt = piece_pose_data_string(image_num, rio_time, image_time, fuel_data, bumper_data)
                     fuel_pose_data_string_header_ntt.set(txt)
-                    fuel_area_ntt.set(max_area)
-                    fuel_distance_ntt.set(round(distance,2))
+                    if max_contour is not None:
+                        fuel_area_ntt.set(max_area)
+                    '''fuel_distance_ntt.set(round(distance,2))
                     fuel_angle_ntt.set(round(angle,2))   
                     fuel_y_val_ntt.set(yVal)   
                     fuel_x_val_ntt.set(xVal)   
-                    fuel_orientation.set(orient.name)    
+                    fuel_orientation_ntt.set(orient.name)'''    
                     #frame_rate_ntt.set(round(fps_av, 1))          
                     #cv2.circle(img, (center_x, center_y), 6, (255,0,255), -1)
                     #cv2.drawContours(img, [max_contour], 0, (200,0,0), 4)
