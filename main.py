@@ -691,12 +691,17 @@ def pose_data_bytes(sequence_num, rio_time, image_time, tags, tag_poses):
 def piece_pose_data_bytes(sequence_num, rio_time, image_time, fuel_data, bumper_data):
     byte_array = bytearray()
     # start the array with sequence number, the RIO's time, image time, and add fuel object type
-    byte_array += struct.pack(">LffBB", sequence_num, rio_time, image_time, obj_type.FUEL.value, len(fuel_data))
+    '''byte_array += struct.pack(">LffBB", sequence_num, rio_time, image_time, obj_type.FUEL.value, len(fuel_data))
     for i in range(len(fuel_data)):
-        byte_array += struct.pack("ffBH", fuel_data[i].distance, fuel_data[i].angle, fuel_data[i].orientation.value, fuel_data[i].amount) 
+        byte_array += struct.pack("ffBI", fuel_data[i].distance, fuel_data[i].angle, fuel_data[i].orientation.value, fuel_data[i].amount) 
     byte_array += struct.pack("BB", obj_type.BUMPER.value, len(bumper_data))
     for i in range(len(bumper_data)):
-        byte_array += struct.pack("ffB", bumper_data[i].distance, bumper_data[i].angle, bumper_data[i].alliance.value) 
+        byte_array += struct.pack("ffB", bumper_data[i].distance, bumper_data[i].angle, bumper_data[i].alliance.value)'''
+
+    byte_array += struct.pack(">LffB", sequence_num, rio_time, image_time, len(fuel_data))
+    for i in range(len(fuel_data)):
+        byte_array += struct.pack("ffBI", fuel_data[i].distance, fuel_data[i].angle, fuel_data[i].orientation.value, fuel_data[i].amount) 
+
     return byte_array
 
 def remove_image_files(path):
@@ -1564,10 +1569,10 @@ def main():
                             if bumper_loc[1] >= 440: # don't see a full bumper this close, so y value for this distance is a bit off so force it to 0
                                 distance = 0
                             else:
-                                distance = bumper_regress_distance(bumper_loc[1]) * 12 # get distance (inches) using y location
+                                distance = bumper_regress_distance(bumper_loc[1]) # get distance (inches) using y location
                             px_per_deg = bumper_regress_px_per_deg(distance) # get pixel per degree
                             angle = (1 / px_per_deg) * (bumper_loc[0] - w/2)
-                            if (distance >= 0 and distance < 140) and (angle >= -20 and angle < 20): # sanity check'''
+                            if (distance >= 0 and distance < 10000) and (angle >= -35 and angle < 35): # sanity check'''
                                 bumper_data.append(Bumper_Data_Class(distance, angle, color))
             
                                 
@@ -1717,10 +1722,16 @@ def main():
                                     px_per_deg = fuel_regress_px_per_deg(distance) # get pixel per degree
                                     #px_per_deg = 15.5
                                     one_fuel_area = fuel_regress_area(px_per_deg)
+                                   
                                     if orient == orientation.SQUARE and len(approx) >= 8 and len(approx) <= 11:
                                         amount = 1
                                     else:
-                                        amount = int(math.ceil(max_area/one_fuel_area))
+                                         #sanity check
+                                        if one_fuel_area <= 0:
+                                            amount = 1
+                                        else:
+                                            amount = int(math.ceil(max_area/one_fuel_area))
+                                        
                                     angle = (1 / px_per_deg) * (center_x - w/2)
                                     yVal = center_y
                                     xVal = center_x
