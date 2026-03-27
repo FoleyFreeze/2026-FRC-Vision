@@ -347,11 +347,12 @@ class PieceData:
 
 def fuel_regress_distance(y):
     terms = [
-    7.0966516285127875e+002,
-    -6.9820722061739895e+000,
-    2.6039528430908565e-002,
-    -4.3279258459108625e-005,
-    2.6951712467292628e-008
+     1.3921758791961356e+003,
+    -1.6165927558769695e+001,
+     7.2437836237051897e-002,
+    -1.4430817221607785e-004,
+     1.0680205089984502e-007
+
     ]
     
     t = 1
@@ -1903,7 +1904,7 @@ def main():
                                 distance = bumper_regress_distance(bumper_loc[1]) * 12 # get distance (inches) using y location
                             px_per_deg = bumper_regress_px_per_deg(distance) # get pixel per degree
                             angle = (1 / px_per_deg) * (bumper_loc[0] - w/2)
-                            if (distance >= 0 and distance < 150) and (angle >= -20 and angle < 20): # sanity check'''
+                            if (distance >= 0 and distance < 140) and (angle >= -20 and angle < 20): # sanity check'''
                                 bumper_data.append(Bumper_Data_Class(distance, angle, color))
             
                                 
@@ -2046,12 +2047,12 @@ def main():
 
                                     #extent goes way down when we get real close
                                     #if (extent > extent_min and extent < 1.0):
-
                                     if center_y >= 440: # don't see a full fuel this close, so y value for this distance is a bit off so force it to 0
                                         distance = 0
                                     else:
-                                        distance = fuel_regress_distance(center_y) * 12 # get distance (inches) using y location
+                                        distance = fuel_regress_distance(center_y) # get distance (inches) using y location
                                     px_per_deg = fuel_regress_px_per_deg(distance) # get pixel per degree
+                                    #px_per_deg = 15.5
                                     one_fuel_area = fuel_regress_area(px_per_deg)
                                     if orient == orientation.SQUARE and len(approx) >= 8 and len(approx) <= 11:
                                         amount = 1
@@ -2060,7 +2061,7 @@ def main():
                                     angle = (1 / px_per_deg) * (center_x - w/2)
                                     yVal = center_y
                                     xVal = center_x
-                                    if (distance >= 0 and distance < 150) and (angle >= -20 and angle < 20): # sanity check'''
+                                    if (distance >= 0 and distance < 150) and (angle >= -35 and angle < 35): # sanity check''' CHANGE BACK TO distance < 150
                                         fuel_data.append(Fuel_Data_Class(distance, angle, orient, amount))
                                         
                                         #End of contour loop
@@ -2091,10 +2092,11 @@ def main():
                     if max_contour is not None:
                         fuel_area_ntt.set(max_area)
                     '''fuel_distance_ntt.set(round(distance,2))
-                    fuel_angle_ntt.set(round(angle,2))   
-                    fuel_y_val_ntt.set(yVal)   
-                    fuel_x_val_ntt.set(xVal)   
-                    fuel_orientation_ntt.set(orient.name)'''    
+                    fuel_angle_ntt.set(round(angle,2))'''   
+                    if(len(fuel_data) > 0):
+                        fuel_y_val_ntt.set(yVal)   
+                        fuel_x_val_ntt.set(xVal)   
+                    #fuel_orientation_ntt.set(orient.name)    
                     #frame_rate_ntt.set(round(fps_av, 1))          
                     #cv2.circle(img, (center_x, center_y), 6, (255,0,255), -1)
                     #cv2.drawContours(img, [max_contour], 0, (200,0,0), 4)
