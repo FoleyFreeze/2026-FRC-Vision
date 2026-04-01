@@ -62,11 +62,12 @@ def fuel_regress_area(area):
 
 def bumper_regress_distance(y):
     terms = [
-    7.0966516285127875e+002,
-    -6.9820722061739895e+000,
-    2.6039528430908565e-002,
-    -4.3279258459108625e-005,
-    2.6951712467292628e-008
+     2.2326075036634838e+003,
+    -3.1295849898754600e+001,
+     1.8111745027493842e-001,
+    -5.2627403186379933e-004,
+     7.6103551344265070e-007,
+    -4.3663088239416712e-010
     ]
     
     t = 1
@@ -932,6 +933,10 @@ def main():
     blue_bumper_max_v_ntt = NTGetDouble(ntinst.getDoubleTopic(BLUE_BUMPER_MAX_V_TOPIC_NAME), BLUE_BUMPER_MAX_V, BLUE_BUMPER_MAX_V, BLUE_BUMPER_MAX_V)
     blue_bumper_min_area_ntt = NTGetDouble(ntinst.getDoubleTopic(BLUE_BUMPER_MIN_A_TOPIC_NAME), BLUE_BUMPER_MIN_A, BLUE_BUMPER_MIN_A, BLUE_BUMPER_MIN_A)
 
+    bumper_y_val_ntt = NTGetDouble(ntinst.getDoubleTopic("Vision/Bumper/Bumper Y Val"), 0.0, 0.0, 0.0)
+    bumper_x_val_ntt = NTGetDouble(ntinst.getDoubleTopic("Vision/Bumper/Bumper X Val"), 0.0, 0.0, 0.0)
+
+
     bumper_y_crop_ntt = NTGetDouble(ntinst.getDoubleTopic(BUMPER_Y_CROP_TOPIC_NAME), 0.0, 0.0, 0.0)
 
     gen_fuel_y_offset_ntt =  NTGetDouble(ntinst.getDoubleTopic(GEN_FUEL_Y_OFFSET_TOPIC_NAME), 0, 0, 0)
@@ -1545,6 +1550,7 @@ def main():
             bumper_data = []
             masks = [red_mask, blue_mask]
             min_areas = [red_bumper_min_area, blue_bumper_min_area]
+            biggest_area = 0
             for i in range(len(masks)):
                 masks[i][0:int(bumper_y_crop), 0:w-1] = 0
                 color, useless = cv2.findContours(masks[i], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -1574,7 +1580,15 @@ def main():
                             angle = (1 / px_per_deg) * (bumper_loc[0] - w/2)
                             if (distance >= 0 and distance < 10000) and (angle >= -35 and angle < 35): # sanity check'''
                                 bumper_data.append(Bumper_Data_Class(distance, angle, color))
-            
+                            if area > biggest_area:
+                                biggest_area = area
+                                bumper_y = r_y + r_h
+                                bumper_x = r_x + (0.5 * r_w)
+    
+        if len(bumper_data) > 0:
+            bumper_y_val_ntt.set(bumper_y)
+            bumper_x_val_ntt.set(bumper_x)
+
                                 
             #    for i in range(len(low_left)):                
             #        cv2.circle(img, low_left[i], 8, (255, 0, 255), -1)
