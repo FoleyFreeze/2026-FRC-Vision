@@ -1583,7 +1583,7 @@ def main():
                                 distance = bumper_regress_distance(bumper_loc[1]) # get distance (inches) using y location
                             px_per_deg = bumper_regress_px_per_deg(distance) # get pixel per degree
                             angle = (1 / px_per_deg) * (bumper_loc[0] - w/2)
-                            if (distance >= 0 and distance < 150) and (angle >= -35 and angle < 35): # sanity check'''
+                            if (distance >= 0 and distance < 132) and (angle >= -35 and angle < 35): # sanity check'''
                                 bumper_data.append(Bumper_Data_Class(distance, angle, color))
                             if area > biggest_area:
                                 biggest_area = area
@@ -1760,7 +1760,7 @@ def main():
                                     xVal = center_x
                                     #print(f'd={distance:3.2f} a={angle:3.2f} o={orient} amt={amount}')
 
-                                    if (distance >= 0 and distance < 150) and (angle >= -35 and angle < 35): # sanity check''' CHANGE BACK TO distance < 150
+                                    if (distance >= 0 and distance < 132) and (angle >= -35 and angle < 35): # sanity check''' CHANGE BACK TO distance < 150
                                         fuel_data.append(Fuel_Data_Class(distance, angle, orient, amount))
                                         
                                         #End of contour loop
