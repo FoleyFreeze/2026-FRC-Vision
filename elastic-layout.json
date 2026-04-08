@@ -647,6 +647,13 @@
           }
         ]
       }
+    },
+    {
+      "name": "10606",
+      "grid_layout": {
+        "layouts": [],
+        "containers": []
+      }
     }
   ]
 }

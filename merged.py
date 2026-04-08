@@ -1038,7 +1038,7 @@ def piece_pose_data_bytes(sequence_num, rio_time, image_time, fuel_data, bumper_
 
     byte_array += struct.pack(">LffB", sequence_num, rio_time, image_time, len(fuel_data))
     for i in range(len(fuel_data)):
-        byte_array += struct.pack("ffBI", fuel_data[i].distance, fuel_data[i].angle, fuel_data[i].orientation.value, fuel_data[i].amount) 
+        byte_array += struct.pack(">ffBI", fuel_data[i].distance, fuel_data[i].angle, fuel_data[i].orientation.value, fuel_data[i].amount) 
 
     return byte_array
 
@@ -1156,7 +1156,7 @@ def main():
     camera_orientation = camera_upside_down()
 
     # start NetworkTables
-    ntconnect = NTConnectType(NTConnectType.SERVER)    #use CLIENT when running with rio
+    ntconnect = NTConnectType(NTConnectType.CLIENT)    #use CLIENT when running with rio
     ntinst = NetworkTableInstance.getDefault()
     if ntconnect == NTConnectType.SERVER:
         ntinst.startServer()
@@ -1838,9 +1838,14 @@ def main():
         #FUEL!!!
         elif vision_type == 'fuel':
         
+            #print("doing fuel")
+
             #if fuel_enable_ntt.get() == True:
 
             db_f = debug_fuel_ntt.get()
+            #print(db_f)
+
+            #print(fuel_y_crop)
 
             img[0:int(fuel_y_crop), 0:w-1] = 0
             original_image = img.copy()
@@ -1915,16 +1920,16 @@ def main():
                                 distance = bumper_regress_distance(bumper_loc[1]) # get distance (inches) using y location
                             px_per_deg = bumper_regress_px_per_deg(distance) # get pixel per degree
                             angle = (1 / px_per_deg) * (bumper_loc[0] - w/2)
-                            if (distance >= 0 and distance < 10000) and (angle >= -35 and angle < 35): # sanity check'''
+                            if (distance >= 0 and distance < 150) and (angle >= -35 and angle < 35): # sanity check'''
                                 bumper_data.append(Bumper_Data_Class(distance, angle, color))
                             if area > biggest_area:
                                 biggest_area = area
                                 bumper_y = r_y + r_h
                                 bumper_x = r_x + (0.5 * r_w)
     
-        if len(bumper_data) > 0:
-            bumper_y_val_ntt.set(bumper_y)
-            bumper_x_val_ntt.set(bumper_x)
+                            if len(bumper_data) > 0:
+                                bumper_y_val_ntt.set(bumper_y)
+                                bumper_x_val_ntt.set(bumper_x)
 
                                 
             #    for i in range(len(low_left)):                
@@ -1986,7 +1991,7 @@ def main():
                     circle_aspect_w = r_w / r_h
                     approx_arcs = 5
                     #different criteria when fuel gets close
-                    if r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET > 420:
+                    if r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET > 470:
                         approx_arcs = 2
                         min_circle_area *= 0.8
                         fuel_min_extent *= 0.9
@@ -1995,7 +2000,7 @@ def main():
                         circle_aspect_h = r_h / r_w
                         extent = area/(r_w*r_h)
                         if extent > fuel_min_extent:
-                            cv2.rectangle(img, (r_x, r_y), (r_x + r_w, r_y + r_h), (0, 0, 0), 2)          
+                            #cv2.rectangle(img, (r_x, r_y), (r_x + r_w, r_y + r_h), (0, 0, 0), 2)          
                             circle_ratio = max(circle_aspect_w, circle_aspect_h) - min(circle_aspect_w, circle_aspect_h)
                             if circle_ratio < 0.17:
                                 #cv2.putText(img, "1 FUEL", (r_x , (round(r_y + (1.5 * r_h)))), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 0, 0), 2) 
@@ -2061,6 +2066,8 @@ def main():
                                     else:
                                         extent_min = 0.25'''
 
+                                    cv2.rectangle(img, (r_x, r_y), (r_x + r_w, r_y + r_h), (0, 0, 0), 2)          
+
                                     #Extent is the ratio of contour area to bounding rectangle area.
                                     #extent = float(area) / (r_w * r_h)
 
@@ -2074,18 +2081,22 @@ def main():
                                     #px_per_deg = 15.5
                                     one_fuel_area = fuel_regress_area(px_per_deg)
                                    
-                                    if orient == orientation.SQUARE and len(approx) >= 8 and len(approx) <= 11:
+                                    #if orient == orientation.SQUARE and len(approx) >= 8 and len(approx) <= 11:
+                                    #    amount = 1
+                                    #else:
+                                    #sanity check
+                                    if one_fuel_area <= 0:
                                         amount = 1
                                     else:
-                                         #sanity check
-                                        if one_fuel_area <= 0:
-                                            amount = 1
-                                        else:
-                                            amount = int(math.ceil(max_area/one_fuel_area))
-                                        
+                                        amount = int(math.ceil(max_area/one_fuel_area))
+                                        if amount > 600: # cap the amount to be something semi-reasonable
+                                            amount = 600
+                                    
                                     angle = (1 / px_per_deg) * (center_x - w/2)
                                     yVal = center_y
                                     xVal = center_x
+                                    #print(f'd={distance:3.2f} a={angle:3.2f} o={orient} amt={amount}')
+
                                     if (distance >= 0 and distance < 150) and (angle >= -35 and angle < 35): # sanity check''' CHANGE BACK TO distance < 150
                                         fuel_data.append(Fuel_Data_Class(distance, angle, orient, amount))
                                         
@@ -2107,12 +2118,17 @@ def main():
                     image_time_av_total = 0
                     image_counter = 0
 
+
+                #print(f'd={fuel_data[0].distance:3.2f} a={fuel_data[0].angle:3.2f} o={fuel_data[0].orientation} amt={fuel_data[0].amount}')
+
+                #print(len(fuel_data))
                 pose_data = piece_pose_data_bytes(image_num, rio_time, image_time, fuel_data, bumper_data)
                 fuel_pose_data_bytes_ntt.set(pose_data)
                 NetworkTableInstance.getDefault().flush()
                 frame_rate_ntt.set(round(fps_av, 1))   
                 if db_f == True:
                     txt = piece_pose_data_string(image_num, rio_time, image_time, fuel_data, bumper_data)
+                    #print(txt)
                     fuel_pose_data_string_header_ntt.set(txt)
                     if max_contour is not None:
                         fuel_area_ntt.set(max_area)
