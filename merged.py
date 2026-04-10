@@ -166,6 +166,7 @@ BLUE_BUMPER_MIN_A = 0
 
 BUMPER_Y_CROP_TOPIC_NAME = "/Vision/Bumper/Bumper Y Crop"
 BUMPER_Y_CROP = 0
+BUMPER_ENABLE_TOPIC_NAME = "/Vision/Bumper/Enable"
 class NTConnectType(Enum):
     SERVER = 1
     CLIENT = 2
@@ -1278,6 +1279,8 @@ def main():
 
     gen_fuel_y_offset_ntt =  NTGetDouble(ntinst.getDoubleTopic(GEN_FUEL_Y_OFFSET_TOPIC_NAME), 0, 0, 0)
     gen_fuel_x_offset_ntt =  NTGetDouble(ntinst.getDoubleTopic(GEN_FUEL_X_OFFSET_TOPIC_NAME), 0, 0, 0)
+    bumper_enable_ntt = NTGetBoolean(ntinst.getBooleanTopic(BUMPER_ENABLE_TOPIC_NAME), False, False, False)
+
 
     detector = robotpy_apriltag.AprilTagDetector()
     #detector.addFamily("tag16h5")
@@ -1840,8 +1843,6 @@ def main():
         
             #print("doing fuel")
 
-            #if fuel_enable_ntt.get() == True:
-
             db_f = debug_fuel_ntt.get()
             #print(db_f)
 
@@ -1881,226 +1882,232 @@ def main():
                 blue_bumper_min_area = int(blue_bumper_min_area_ntt.get())
                 bumper_y_crop = int(bumper_y_crop_ntt.get())
 
-            red_low = np.array([red_bumper_min_h, red_bumper_min_s, red_bumper_min_v])
-            red_high = np.array([red_bumper_max_h, red_bumper_max_s, red_bumper_max_v])
-            red_mask = cv2.inRange(img_HSV, red_low, red_high)
-
-            blue_low = np.array([blue_bumper_min_h, blue_bumper_min_s, blue_bumper_min_v])
-            blue_high = np.array([blue_bumper_max_h, blue_bumper_max_s, blue_bumper_max_v])
-            blue_mask = cv2.inRange(img_HSV, blue_low, blue_high)
-
             bumper_data = []
-            masks = [red_mask, blue_mask]
-            min_areas = [red_bumper_min_area, blue_bumper_min_area]
-            biggest_area = 0
-            for i in range(len(masks)):
-                masks[i][0:int(bumper_y_crop), 0:w-1] = 0
-                color, useless = cv2.findContours(masks[i], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-                colorSorted = sorted(color, key=lambda x: cv2.contourArea(x), reverse=True)
-                bumper_contour = None
-                for y in colorSorted:
-                    color = teamColor(i + 1)
-                    area = cv2.contourArea(y)
-                    if area > min_areas[i]:
-                        r_x,r_y,r_w,r_h = cv2.boundingRect(y)
-                        bumper_contour = y
 
-                        if bumper_contour is not None:
-                            bumper_loc = (int(r_x + (0.5*r_w)), (r_y + r_h))
-                            r_x,r_y,r_w,r_h = cv2.boundingRect(bumper_contour)
-                            if i == 0:
-                                cv2.rectangle(img,(r_x,0), (r_x+r_w, r_y+r_h), (0,0,255), 2)
-                            else:
-                                cv2.rectangle(img,(r_x,0), (r_x+r_w, r_y+r_h), (255,0,0), 2)
-                            cv2.rectangle(img_HSV,(r_x,0), (r_x+r_w, r_y+r_h), (0,0,0), -1)
+            if bumper_enable_ntt.get() == True:
 
-                            if bumper_loc[1] >= 440: # don't see a full bumper this close, so y value for this distance is a bit off so force it to 0
-                                distance = 0
-                            else:
-                                distance = bumper_regress_distance(bumper_loc[1]) # get distance (inches) using y location
-                            px_per_deg = bumper_regress_px_per_deg(distance) # get pixel per degree
-                            angle = (1 / px_per_deg) * (bumper_loc[0] - w/2)
-                            if (distance >= 0 and distance < 150) and (angle >= -35 and angle < 35): # sanity check'''
-                                bumper_data.append(Bumper_Data_Class(distance, angle, color))
-                            if area > biggest_area:
-                                biggest_area = area
-                                bumper_y = r_y + r_h
-                                bumper_x = r_x + (0.5 * r_w)
-    
-                            if len(bumper_data) > 0:
-                                bumper_y_val_ntt.set(bumper_y)
-                                bumper_x_val_ntt.set(bumper_x)
+                red_low = np.array([red_bumper_min_h, red_bumper_min_s, red_bumper_min_v])
+                red_high = np.array([red_bumper_max_h, red_bumper_max_s, red_bumper_max_v])
+                red_mask = cv2.inRange(img_HSV, red_low, red_high)
+
+                blue_low = np.array([blue_bumper_min_h, blue_bumper_min_s, blue_bumper_min_v])
+                blue_high = np.array([blue_bumper_max_h, blue_bumper_max_s, blue_bumper_max_v])
+                blue_mask = cv2.inRange(img_HSV, blue_low, blue_high)
+
+                #bumper_data = []
+                masks = [red_mask, blue_mask]
+                min_areas = [red_bumper_min_area, blue_bumper_min_area]
+                biggest_area = 0
+                for i in range(len(masks)):
+                    masks[i][0:int(bumper_y_crop), 0:w-1] = 0
+                    color, useless = cv2.findContours(masks[i], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                    colorSorted = sorted(color, key=lambda x: cv2.contourArea(x), reverse=True)
+                    bumper_contour = None
+                    for y in colorSorted:
+                        color = teamColor(i + 1)
+                        area = cv2.contourArea(y)
+                        if area > min_areas[i]:
+                            r_x,r_y,r_w,r_h = cv2.boundingRect(y)
+                            bumper_contour = y
+
+                            if bumper_contour is not None:
+                                bumper_loc = (int(r_x + (0.5*r_w)), (r_y + r_h))
+                                r_x,r_y,r_w,r_h = cv2.boundingRect(bumper_contour)
+                                if db_f == True:
+                                    if i == 0:
+                                        cv2.rectangle(img,(r_x,0), (r_x+r_w, r_y+r_h), (0,0,255), 2)
+                                    else:
+                                        cv2.rectangle(img,(r_x,0), (r_x+r_w, r_y+r_h), (255,0,0), 2)
+                                    cv2.rectangle(img_HSV,(r_x,0), (r_x+r_w, r_y+r_h), (0,0,0), -1)
+
+                                if bumper_loc[1] >= 440: # don't see a full bumper this close, so y value for this distance is a bit off so force it to 0
+                                    distance = 0
+                                else:
+                                    distance = bumper_regress_distance(bumper_loc[1]) # get distance (inches) using y location
+                                px_per_deg = bumper_regress_px_per_deg(distance) # get pixel per degree
+                                angle = (1 / px_per_deg) * (bumper_loc[0] - w/2)
+                                if (distance >= 0 and distance < 132) and (angle >= -35 and angle < 35): # sanity check'''
+                                    bumper_data.append(Bumper_Data_Class(distance, angle, color))
+                                if area > biggest_area:
+                                    biggest_area = area
+                                    bumper_y = r_y + r_h
+                                    bumper_x = r_x + (0.5 * r_w)
+        
+                                if len(bumper_data) > 0:
+                                    bumper_y_val_ntt.set(bumper_y)
+                                    bumper_x_val_ntt.set(bumper_x)
 
                                 
             #    for i in range(len(low_left)):                
             #        cv2.circle(img, low_left[i], 8, (255, 0, 255), -1)
             #        cv2.circle(img, low_right[i], 8, (255, 255, 0), -1)
 
-            '''
-            # filter colors in HSV space
-            img_HSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-            '''
-            # even though image capture format is RGB888, images are stored as BGR
-            # for HSV filtering / masking / detecting, convert input image from BGR to HSV
-            # but for displaying the image, convert input image from BGR to RGB
-            
-
-
-
-            # only keep pixels with colors that match the range in color_config
-            color_low = np.array([fuel_min_h, fuel_min_s, fuel_min_v])
-            color_high = np.array([fuel_max_h, fuel_max_s, fuel_max_v])
-            img_mask = cv2.inRange(img_HSV, color_low, color_high)
-            # fuel should appear in the region below the bottom of this region
-            #   img_mask[0:260,0:640] = 0
-            
-            #cv2.putText(img, view_types[amount_view_type], (0, 22), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 220), 2) 
-
-            
-            color, useless = cv2.findContours(img_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-            #sorting the colored pixels from largest to smallest
-            colorSorted = sorted(color, key=lambda x: cv2.contourArea(x), reverse=True)
-            
-            fuel = []
-            fuel_contours = []
-        
-            max_contour = None
-            center_y_max = -24
-            center_y = -24
-            area = 1
-            maxRatioDiff = 0
-            max_inverse_area = 0
             fuel_data = []
-            orient = orientation.NONE
-            for y in colorSorted:
+            if fuel_enable_ntt.get() == True:
+ 
+                '''
+                # filter colors in HSV space
+                img_HSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+                '''
+                # even though image capture format is RGB888, images are stored as BGR
+                # for HSV filtering / masking / detecting, convert input image from BGR to HSV
+                # but for displaying the image, convert input image from BGR to RGB
                 
-                area = cv2.contourArea(y)
-                if area > fuel_min_area:
+                # only keep pixels with colors that match the range in color_config
+                color_low = np.array([fuel_min_h, fuel_min_s, fuel_min_v])
+                color_high = np.array([fuel_max_h, fuel_max_s, fuel_max_v])
+                img_mask = cv2.inRange(img_HSV, color_low, color_high)
+                # fuel should appear in the region below the bottom of this region
+                #   img_mask[0:260,0:640] = 0
+                
+                #cv2.putText(img, view_types[amount_view_type], (0, 22), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 220), 2) 
 
-                    r_x,r_y,r_w,r_h = cv2.boundingRect(y)
-
-                    min_circle_area = CIRCLE_AREA_MIN
-                    perim = cv2.arcLength(y,True)
-                    approx = cv2.approxPolyDP(y, 0.02 * perim ,True)
-                    circle_area = cv2.contourArea(approx)
+                
+                color, useless = cv2.findContours(img_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                #sorting the colored pixels from largest to smallest
+                colorSorted = sorted(color, key=lambda x: cv2.contourArea(x), reverse=True)
+                
+                fuel = []
+                fuel_contours = []
+            
+                max_contour = None
+                center_y_max = -24
+                center_y = -24
+                area = 1
+                maxRatioDiff = 0
+                max_inverse_area = 0
+                #fuel_data = []
+                orient = orientation.NONE
+                for y in colorSorted:
                     
-                    #print("arcs: " + str(len(approx)))
-                    #print("contours: " + str(len(colorSorted)))
-                    #print("circle area: " + str(circle_area))
-                    #circle detection
-                    circle_aspect_w = r_w / r_h
-                    approx_arcs = 5
-                    #different criteria when fuel gets close
-                    if r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET > 470:
-                        approx_arcs = 2
-                        min_circle_area *= 0.8
-                        fuel_min_extent *= 0.9
-                    #print("min area: " + str(min_circle_area))
-                    if (len(approx) >= approx_arcs) and circle_area > min_circle_area:
-                        circle_aspect_h = r_h / r_w
-                        extent = area/(r_w*r_h)
-                        if extent > fuel_min_extent:
-                            #cv2.rectangle(img, (r_x, r_y), (r_x + r_w, r_y + r_h), (0, 0, 0), 2)          
-                            circle_ratio = max(circle_aspect_w, circle_aspect_h) - min(circle_aspect_w, circle_aspect_h)
-                            if circle_ratio < 0.17:
-                                #cv2.putText(img, "1 FUEL", (r_x , (round(r_y + (1.5 * r_h)))), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 0, 0), 2) 
-                                orient = orientation.SQUARE
-                            else:
-                                if circle_aspect_w > 1:
-                                    orient = orientation.HORIZONTAL
+                    area = cv2.contourArea(y)
+                    if area > fuel_min_area:
+
+                        r_x,r_y,r_w,r_h = cv2.boundingRect(y)
+
+                        min_circle_area = CIRCLE_AREA_MIN
+                        perim = cv2.arcLength(y,True)
+                        approx = cv2.approxPolyDP(y, 0.02 * perim ,True)
+                        circle_area = cv2.contourArea(approx)
+                        
+                        #print("arcs: " + str(len(approx)))
+                        #print("contours: " + str(len(colorSorted)))
+                        #print("circle area: " + str(circle_area))
+                        #circle detection
+                        circle_aspect_w = r_w / r_h
+                        approx_arcs = 5
+                        #different criteria when fuel gets close
+                        if r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET > 470:
+                            approx_arcs = 2
+                            min_circle_area *= 0.8
+                            fuel_min_extent *= 0.9
+                        #print("min area: " + str(min_circle_area))
+                        if (len(approx) >= approx_arcs) and circle_area > min_circle_area:
+                            circle_aspect_h = r_h / r_w
+                            extent = area/(r_w*r_h)
+                            if extent > fuel_min_extent:
+                                #cv2.rectangle(img, (r_x, r_y), (r_x + r_w, r_y + r_h), (0, 0, 0), 2)          
+                                circle_ratio = max(circle_aspect_w, circle_aspect_h) - min(circle_aspect_w, circle_aspect_h)
+                                if circle_ratio < 0.17:
+                                    #cv2.putText(img, "1 FUEL", (r_x , (round(r_y + (1.5 * r_h)))), cv2.FONT_HERSHEY_SIMPLEX, 0.75, (255, 0, 0), 2) 
+                                    orient = orientation.SQUARE
                                 else:
-                                    orient = orientation.VERTICAL
-                            max_contour = y
+                                    if circle_aspect_w > 1:
+                                        orient = orientation.HORIZONTAL
+                                    else:
+                                        orient = orientation.VERTICAL
+                                max_contour = y
 
-                            ''' if amount_view_type == 0:
-                                #max y
-                                center_y = r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET
-                                if center_y > center_y_max:
-                                    center_y_max = center_y
-                                    max_contour = y
-
-
-                            elif amount_view_type == 1:
-                                #aspect ratio
-                                aspectW = r_w / r_h
-                                aspectH = r_h / r_w
-                                ratioDiff = max(aspectW, aspectH) - min(aspectW, aspectH)
-                                if ratioDiff >= maxRatioDiff:
-                                    max_contour = y
-                                    maxRatioDiff = ratioDiff   
+                                ''' if amount_view_type == 0:
+                                    #max y
+                                    center_y = r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET
+                                    if center_y > center_y_max:
+                                        center_y_max = center_y
+                                        max_contour = y
 
 
-                            elif amount_view_type == 2:
-                                #inverse
-                                contour_area = cv2.contourArea(y)
-                                rect_area = r_h * r_w
-                                inverse_area = rect_area - contour_area
-                                if(inverse_area > max_inverse_area):
-                                    max_contour = y
-                                    max_inverse_area = inverse_area '''
+                                elif amount_view_type == 1:
+                                    #aspect ratio
+                                    aspectW = r_w / r_h
+                                    aspectH = r_h / r_w
+                                    ratioDiff = max(aspectW, aspectH) - min(aspectW, aspectH)
+                                    if ratioDiff >= maxRatioDiff:
+                                        max_contour = y
+                                        maxRatioDiff = ratioDiff   
+
+
+                                elif amount_view_type == 2:
+                                    #inverse
+                                    contour_area = cv2.contourArea(y)
+                                    rect_area = r_h * r_w
+                                    inverse_area = rect_area - contour_area
+                                    if(inverse_area > max_inverse_area):
+                                        max_contour = y
+                                        max_inverse_area = inverse_area '''
+                                    
+
+
+
+                                #uncomment the following block to get raw data output for debugging and calibrating distance / angle
                                 
 
 
-
-                            #uncomment the following block to get raw data output for debugging and calibrating distance / angle
-                            
-
-
-                            #center_x = r_x + int(round(r_w / 2)) + FUEL_X_OFFSET
-                            #center_y = r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET
-                            #extent = float(area) / (r_w * r_h)
-                            #print(f'ar={area:4.1f} ex={extent:1.2f} fuel_x={center_x} fuel_y={center_y}')
+                                #center_x = r_x + int(round(r_w / 2)) + FUEL_X_OFFSET
+                                #center_y = r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET
+                                #extent = float(area) / (r_w * r_h)
+                                #print(f'ar={area:4.1f} ex={extent:1.2f} fuel_x={center_x} fuel_y={center_y}')
 
 
 
-                            # at this point, max_contour points to closest shape by vertical y or None if the area of all were too small
-                            # now need to determine if this shape is a fuel
-                            if max_contour is not None:
-                                max_area = cv2.contourArea(max_contour)
-                                r_x,r_y,r_w,r_h = cv2.boundingRect(max_contour)
-                                center_x = r_x + int(round(r_w / 2)) + FUEL_X_OFFSET
-                                center_y = r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET
-                                if (center_y > 17  and center_y < 240*2):
-                                    '''if (center_y > 240*2): # at really close, can't see the bottom, aspect ratio goes way up 
-                                        extent_min = 0.25
-                                    else:
-                                        extent_min = 0.25'''
+                                # at this point, max_contour points to closest shape by vertical y or None if the area of all were too small
+                                # now need to determine if this shape is a fuel
+                                if max_contour is not None:
+                                    max_area = cv2.contourArea(max_contour)
+                                    r_x,r_y,r_w,r_h = cv2.boundingRect(max_contour)
+                                    center_x = r_x + int(round(r_w / 2)) + FUEL_X_OFFSET
+                                    center_y = r_y + int(round(r_h / 2)) + FUEL_Y_OFFSET
+                                    if (center_y > 17  and center_y < 240*2):
+                                        '''if (center_y > 240*2): # at really close, can't see the bottom, aspect ratio goes way up 
+                                            extent_min = 0.25
+                                        else:
+                                            extent_min = 0.25'''
 
-                                    cv2.rectangle(img, (r_x, r_y), (r_x + r_w, r_y + r_h), (0, 0, 0), 2)          
+                                        if db_f == True:
+                                            cv2.rectangle(img, (r_x, r_y), (r_x + r_w, r_y + r_h), (0, 0, 0), 2)          
 
-                                    #Extent is the ratio of contour area to bounding rectangle area.
-                                    #extent = float(area) / (r_w * r_h)
+                                        #Extent is the ratio of contour area to bounding rectangle area.
+                                        #extent = float(area) / (r_w * r_h)
 
-                                    #extent goes way down when we get real close
-                                    #if (extent > extent_min and extent < 1.0):
-                                    if center_y >= 440: # don't see a full fuel this close, so y value for this distance is a bit off so force it to 0
-                                        distance = 0
-                                    else:
-                                        distance = fuel_regress_distance(center_y) # get distance (inches) using y location
-                                    px_per_deg = fuel_regress_px_per_deg(distance) # get pixel per degree
-                                    #px_per_deg = 15.5
-                                    one_fuel_area = fuel_regress_area(px_per_deg)
-                                   
-                                    #if orient == orientation.SQUARE and len(approx) >= 8 and len(approx) <= 11:
-                                    #    amount = 1
-                                    #else:
-                                    #sanity check
-                                    if one_fuel_area <= 0:
-                                        amount = 1
-                                    else:
-                                        amount = int(math.ceil(max_area/one_fuel_area))
-                                        if amount > 600: # cap the amount to be something semi-reasonable
-                                            amount = 600
+                                        #extent goes way down when we get real close
+                                        #if (extent > extent_min and extent < 1.0):
+                                        if center_y >= 440: # don't see a full fuel this close, so y value for this distance is a bit off so force it to 0
+                                            distance = 0
+                                        else:
+                                            distance = fuel_regress_distance(center_y) # get distance (inches) using y location
+                                        px_per_deg = fuel_regress_px_per_deg(distance) # get pixel per degree
+                                        #px_per_deg = 15.5
+                                        one_fuel_area = fuel_regress_area(px_per_deg)
                                     
-                                    angle = (1 / px_per_deg) * (center_x - w/2)
-                                    yVal = center_y
-                                    xVal = center_x
-                                    #print(f'd={distance:3.2f} a={angle:3.2f} o={orient} amt={amount}')
-
-                                    if (distance >= 0 and distance < 150) and (angle >= -35 and angle < 35): # sanity check''' CHANGE BACK TO distance < 150
-                                        fuel_data.append(Fuel_Data_Class(distance, angle, orient, amount))
+                                        #if orient == orientation.SQUARE and len(approx) >= 8 and len(approx) <= 11:
+                                        #    amount = 1
+                                        #else:
+                                        #sanity check
+                                        if one_fuel_area <= 0:
+                                            amount = 1
+                                        else:
+                                            amount = int(math.ceil(max_area/one_fuel_area))
+                                            if amount > 600: # cap the amount to be something semi-reasonable
+                                                amount = 600
                                         
-                                        #End of contour loop
+                                        angle = (1 / px_per_deg) * (center_x - w/2)
+                                        yVal = center_y
+                                        xVal = center_x
+                                        #print(f'd={distance:3.2f} a={angle:3.2f} o={orient} amt={amount}')
+
+                                        if (distance >= 0 and distance < 132) and (angle >= -35 and angle < 35): # sanity check''' CHANGE BACK TO distance < 150
+                                            fuel_data.append(Fuel_Data_Class(distance, angle, orient, amount))
+                                            
+                                            #End of contour loop
                 
             #if max_contour is not None and not fuel_data:
             if (len(fuel_data) > 0 or len(bumper_data) > 0):

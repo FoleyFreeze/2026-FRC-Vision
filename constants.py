@@ -139,3 +139,4 @@ BLUE_BUMPER_MIN_A = 0
 
 BUMPER_Y_CROP_TOPIC_NAME = "/Vision/Bumper/Bumper Y Crop"
 BUMPER_Y_CROP = 0
+BUMPER_ENABLE_TOPIC_NAME = "/Vision/Bumper/Enable"
