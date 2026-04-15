@@ -696,12 +696,16 @@ def piece_pose_data_bytes(sequence_num, rio_time, image_time, fuel_data, bumper_
     for i in range(len(fuel_data)):
         byte_array += struct.pack("ffBI", fuel_data[i].distance, fuel_data[i].angle, fuel_data[i].orientation.value, fuel_data[i].amount) 
     byte_array += struct.pack("BB", obj_type.BUMPER.value, len(bumper_data))
-    for i in range(len(bumper_data)):
+    for i in rang#e(len(bumper_data)):
         byte_array += struct.pack("ffB", bumper_data[i].distance, bumper_data[i].angle, bumper_data[i].alliance.value)'''
 
-    byte_array += struct.pack(">LffB", sequence_num, rio_time, image_time, len(fuel_data))
-    for i in range(len(fuel_data)):
+    byte_array += struct.pack(">LffB", sequence_num, rio_time, image_time, len(fuel_data)) # header + number of fuel groups
+    for i in range(len(fuel_data)): # output each fuel group
         byte_array += struct.pack(">ffBI", fuel_data[i].distance, fuel_data[i].angle, fuel_data[i].orientation.value, fuel_data[i].amount) 
+
+    byte_array += struct.pack(">B", len(bumper_data)) # number of bumpers
+    for i in range(len(bumper_data)): # output data for each bumper
+        byte_array += struct.pack("ffB", bumper_data[i].distance, bumper_data[i].angle, bumper_data[i].alliance.value)
 
     return byte_array
 
@@ -941,8 +945,8 @@ def main():
 
     gen_fuel_y_offset_ntt =  NTGetDouble(ntinst.getDoubleTopic(GEN_FUEL_Y_OFFSET_TOPIC_NAME), 0, 0, 0)
     gen_fuel_x_offset_ntt =  NTGetDouble(ntinst.getDoubleTopic(GEN_FUEL_X_OFFSET_TOPIC_NAME), 0, 0, 0)
-    bumper_enable_ntt = NTGetBoolean(ntinst.getBooleanTopic(BUMPER_ENABLE_TOPIC_NAME), False, False, False)
 
+    bumper_enable_ntt = NTGetBoolean(ntinst.getBooleanTopic(BUMPER_ENABLE_TOPIC_NAME), False, False, False)
 
     detector = robotpy_apriltag.AprilTagDetector()
     #detector.addFamily("tag16h5")
@@ -1184,12 +1188,23 @@ def main():
 
     while True:
 
+        fuel_data = []
+        bumper_data = []
+        blue_mask = None
+        red_mask = None
+
         rio_time = rio_time_ntt.get()
         current_seconds = time.time()
         time_check = False
+        db_f = debug_fuel_ntt.get()
+        en_f = fuel_enable_ntt.get()
+        en_b = bumper_enable_ntt.get()
+        #print(f'dbg={db_f} f={en_f} b={en_b}')
+
         if current_seconds - prev_seconds >= UPTIME_UPDATE_INTERVAL:
             prev_seconds = current_seconds
             seconds = seconds + 1
+            print(f'{seconds}')
             temp_sec = temp_sec + 1
 
             if vision_type == 'tag':
@@ -1232,67 +1247,67 @@ def main():
                         cam_settings_changed = False
 
             else:
+                
+                if en_f == True or en_b == True:
 
-                db_f = debug_fuel_ntt.get()
+                    if db_f == True:
+                        
+                        if fuel_camera_refresh_nt_ntt.get() == True:
+                            file_read_fuel(config_fuel, configfilefail_ntt)
+                            nt_update_fuel(config_fuel, fuelconfigfile_ntt, \
+                                fuel_min_h_ntt, fuel_min_s_ntt, fuel_min_v_ntt, fuel_max_h_ntt, fuel_max_s_ntt, fuel_max_v_ntt, \
+                                fuel_min_area_ntt, fuel_min_extent_ntt)
+                            file_read_gen(config_gen, configfilefail_ntt)
+                            nt_update_gen(vision_type, config_gen, tag_brightness_ntt, tag_contrast_ntt, tag_ae_ntt, tag_exposure_ntt, \
+                                fuel_brightness_ntt, fuel_contrast_ntt, fuel_ae_ntt, fuel_exposure_ntt, gen_fuel_y_offset_ntt, gen_fuel_x_offset_ntt)
+                            fuel_camera_refresh_nt_ntt.set(False)
 
-                if db_f == True:
-                    
-                    if fuel_camera_refresh_nt_ntt.get() == True:
-                        file_read_fuel(config_fuel, configfilefail_ntt)
-                        nt_update_fuel(config_fuel, fuelconfigfile_ntt, \
-                            fuel_min_h_ntt, fuel_min_s_ntt, fuel_min_v_ntt, fuel_max_h_ntt, fuel_max_s_ntt, fuel_max_v_ntt, \
-                            fuel_min_area_ntt, fuel_min_extent_ntt)
-                        file_read_gen(config_gen, configfilefail_ntt)
-                        nt_update_gen(vision_type, config_gen, tag_brightness_ntt, tag_contrast_ntt, tag_ae_ntt, tag_exposure_ntt, \
-                            fuel_brightness_ntt, fuel_contrast_ntt, fuel_ae_ntt, fuel_exposure_ntt, gen_fuel_y_offset_ntt, gen_fuel_x_offset_ntt)
-                        fuel_camera_refresh_nt_ntt.set(False)
+                        if fuel_last_brightness != fuel_brightness_ntt.get():
+                            brightness = float(fuel_brightness_ntt.get())
+                            picam2.set_controls({'Brightness': float(brightness)})
+                            config_gen.set('GENERAL', 'Brightness', str(brightness))
+                            fuel_last_brightness = brightness
+                            cam_settings_changed = True
 
-                    if fuel_last_brightness != fuel_brightness_ntt.get():
-                        brightness = float(fuel_brightness_ntt.get())
-                        picam2.set_controls({'Brightness': float(brightness)})
-                        config_gen.set('GENERAL', 'Brightness', str(brightness))
-                        fuel_last_brightness = brightness
-                        cam_settings_changed = True
+                        if fuel_last_contrast != fuel_contrast_ntt.get():
+                            contrast = float(fuel_contrast_ntt.get())
+                            picam2.set_controls({'Contrast': float(contrast)})
+                            config_gen.set('GENERAL', 'Contrast', str(contrast))
+                            fuel_last_contrast = contrast
+                            cam_settings_changed = True
 
-                    if fuel_last_contrast != fuel_contrast_ntt.get():
-                        contrast = float(fuel_contrast_ntt.get())
-                        picam2.set_controls({'Contrast': float(contrast)})
-                        config_gen.set('GENERAL', 'Contrast', str(contrast))
-                        fuel_last_contrast = contrast
-                        cam_settings_changed = True
+                        if fuel_last_ae_mode != fuel_ae_ntt.get():
+                            ae_mode = bool(tag_ae_ntt.get())
+                            picam2.set_controls({'AeEnable': bool(ae_mode)})
+                            config_gen.set('GENERAL', 'AeEnable', str(ae_mode))
+                            fuel_last_ae_mode = ae_mode
+                            cam_settings_changed = True
 
-                    if fuel_last_ae_mode != fuel_ae_ntt.get():
-                        ae_mode = bool(tag_ae_ntt.get())
-                        picam2.set_controls({'AeEnable': bool(ae_mode)})
-                        config_gen.set('GENERAL', 'AeEnable', str(ae_mode))
-                        fuel_last_ae_mode = ae_mode
-                        cam_settings_changed = True
+                        if fuel_last_ae_mode == False:
+                            exp_time = int(round(fuel_exposure_ntt.get(),0))
+                            picam2.set_controls({"ExposureTime": \
+                                exp_time, "AnalogueGain": 1.0})
+                            config_gen.set('GENERAL', 'Manual Exposure Time', str(exp_time))
+                            cam_settings_changed = True
 
-                    if fuel_last_ae_mode == False:
-                        exp_time = int(round(fuel_exposure_ntt.get(),0))
-                        picam2.set_controls({"ExposureTime": \
-                            exp_time, "AnalogueGain": 1.0})
-                        config_gen.set('GENERAL', 'Manual Exposure Time', str(exp_time))
-                        cam_settings_changed = True
+                        if FUEL_Y_OFFSET != gen_fuel_y_offset_ntt.get():
+                            FUEL_Y_OFFSET = int(round(gen_fuel_y_offset_ntt.get(),0))
+                            config_gen.set('GENERAL', 'Y Offset', str(FUEL_Y_OFFSET))
+                            cam_settings_changed = True
 
-                    if FUEL_Y_OFFSET != gen_fuel_y_offset_ntt.get():
-                        FUEL_Y_OFFSET = int(round(gen_fuel_y_offset_ntt.get(),0))
-                        config_gen.set('GENERAL', 'Y Offset', str(FUEL_Y_OFFSET))
-                        cam_settings_changed = True
-
-                    if FUEL_X_OFFSET != gen_fuel_x_offset_ntt.get():
-                        FUEL_X_OFFSET = int(round(gen_fuel_x_offset_ntt.get(),0))
-                        config_gen.set('GENERAL', 'X Offset', str(FUEL_X_OFFSET))
-                        cam_settings_changed = True
-                    
-                    if cam_settings_changed == True and fuel_camera_savefile_ntt.get() == True:
-                        print("saving camera settings")
-                        file_write_gen(brightness, contrast, ae_mode, exp_time, FUEL_Y_OFFSET, FUEL_X_OFFSET)
-                        fuel_camera_savefile_ntt.set(False)
-                        cam_settings_changed = False
-                    elif cam_settings_changed == False and fuel_camera_savefile_ntt.get() == True:
-                        print("values unchanged")
-                        fuel_camera_savefile_ntt.set(False)
+                        if FUEL_X_OFFSET != gen_fuel_x_offset_ntt.get():
+                            FUEL_X_OFFSET = int(round(gen_fuel_x_offset_ntt.get(),0))
+                            config_gen.set('GENERAL', 'X Offset', str(FUEL_X_OFFSET))
+                            cam_settings_changed = True
+                        
+                        if cam_settings_changed == True and fuel_camera_savefile_ntt.get() == True:
+                            print("saving camera settings")
+                            file_write_gen(brightness, contrast, ae_mode, exp_time, FUEL_Y_OFFSET, FUEL_X_OFFSET)
+                            fuel_camera_savefile_ntt.set(False)
+                            cam_settings_changed = False
+                        elif cam_settings_changed == False and fuel_camera_savefile_ntt.get() == True:
+                            print("values unchanged")
+                            fuel_camera_savefile_ntt.set(False)
 
 
 
@@ -1307,12 +1322,13 @@ def main():
                     print(f'sec={seconds} tags: ave fps={round(tag_fps_av,0)} min fps={round(tag_fps_av_min,0)} max fps={round(tag_fps_av_max,0)}')
                 else:
                     print(f'{seconds}')
-            else:                
-                if db_f == True:
-                    print(f'sec={seconds} fuel: ave fps={round(fps_av,0)} fps min={round(fps_av_min,0)} fps max={round(fps_av_max,0)}')
-                    #print(f'FUEL_Y_OFFSET={FUEL_Y_OFFSET}')
-                else:
-                    print(f'{seconds}')
+            else:
+                if en_f == True or en_b == True:
+                    if db_f == True:
+                        print(f'sec={seconds} ave fps={round(fps_av,0)} fps min={round(fps_av_min,0)} fps max={round(fps_av_max,0)}')
+                        #print(f'FUEL_Y_OFFSET={FUEL_Y_OFFSET}')
+                    #else:
+                    #   print(f'{seconds}')
             
         if temp_sec >= TEMP_UPDATE_INTERVAL:
             with open("/sys/class/thermal/thermal_zone0/temp", 'r') as f:
@@ -1325,21 +1341,22 @@ def main():
                 temp_ntt.set(int(f.readline()) / 1000) #converting milidegrees C to degrees C
                 temp_sec = 0
                 '''
-                 
-        #img = picam2.capture_array()
-        img = None
-        img = server.wait_for_frame(img)
-        t1_time = time.process_time()
+    
+        if en_f == True or en_b == True:
+            #img = picam2.capture_array()
+            img = None
+            img = server.wait_for_frame(img)
+            t1_time = time.process_time()
 
-        # When the camera bolt hole is facing up, the camera is upside down
-        # When the camera bolt hole is facing down, the camera is mounted right side up.
-        # If flip needed, flip every image using cv2.flip(img,-1) or tell Picamera2 at config time (now) to flip every image it gives
-        #picam2_config['transform'] = libcamera.Transform(hflip=1, vflip=1)
-        #picam2.configure(picam2_config)
-        #picam2.set_controls({"FrameRate": fps})
+            # When the camera bolt hole is facing up, the camera is upside down
+            # When the camera bolt hole is facing down, the camera is mounted right side up.
+            # If flip needed, flip every image using cv2.flip(img,-1) or tell Picamera2 at config time (now) to flip every image it gives
+            #picam2_config['transform'] = libcamera.Transform(hflip=1, vflip=1)
+            #picam2.configure(picam2_config)
+            #picam2.set_controls({"FrameRate": fps})
 
-        if camera_orientation == True:
-            img = cv2.flip(img, -1)
+            if camera_orientation == True:
+                img = cv2.flip(img, -1)
 
         '''
         tag_image_counter += 1
@@ -1503,50 +1520,48 @@ def main():
         #FUEL!!!
         elif vision_type == 'fuel':
         
-            #print("doing fuel")
+            '''db_f = debug_fuel_ntt.get()
+            en_f = fuel_enable_ntt.get()
+            en_b = bumper_enable_ntt.get()
+            print(f'dbg={db_f} f={en_f} b={en_b}')'''
 
-            db_f = debug_fuel_ntt.get()
-            #print(db_f)
+            if en_f == True or en_b == True:
 
-            #print(fuel_y_crop)
+                img[0:int(fuel_y_crop), 0:w-1] = 0
+                original_image = img.copy()
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                img_HSV = cv2.cvtColor(original_image, cv2.COLOR_BGR2HSV)
 
-            img[0:int(fuel_y_crop), 0:w-1] = 0
-            original_image = img.copy()
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-            img_HSV = cv2.cvtColor(original_image, cv2.COLOR_BGR2HSV)
+                if db_f == True:
+                    fuel_min_h = int(fuel_min_h_ntt.get())
+                    fuel_min_s = int(fuel_min_s_ntt.get())
+                    fuel_min_v = int(fuel_min_v_ntt.get())
+                    fuel_max_h = int(fuel_max_h_ntt.get())
+                    fuel_max_s = int(fuel_max_s_ntt.get())
+                    fuel_max_v = int(fuel_max_v_ntt.get())
+                    fuel_min_area = int(fuel_min_area_ntt.get())
+                    fuel_min_extent = float(fuel_min_extent_ntt.get())
+                    fuel_y_crop = int(fuel_y_crop_ntt.get())
 
-            if db_f == True:
-                fuel_min_h = int(fuel_min_h_ntt.get())
-                fuel_min_s = int(fuel_min_s_ntt.get())
-                fuel_min_v = int(fuel_min_v_ntt.get())
-                fuel_max_h = int(fuel_max_h_ntt.get())
-                fuel_max_s = int(fuel_max_s_ntt.get())
-                fuel_max_v = int(fuel_max_v_ntt.get())
-                fuel_min_area = int(fuel_min_area_ntt.get())
-                fuel_min_extent = float(fuel_min_extent_ntt.get())
-                fuel_y_crop = int(fuel_y_crop_ntt.get())
+                #BUMPERS!!!
 
-            #BUMPERS!!!
+                    red_bumper_min_h = int(red_bumper_min_h_ntt.get())
+                    red_bumper_min_s = int(red_bumper_min_s_ntt.get())
+                    red_bumper_min_v = int(red_bumper_min_v_ntt.get())
+                    red_bumper_max_h = int(red_bumper_max_h_ntt.get())
+                    red_bumper_max_s = int(red_bumper_max_s_ntt.get())
+                    red_bumper_max_v = int(red_bumper_max_v_ntt.get())
+                    red_bumper_min_area = int(red_bumper_min_area_ntt.get())
+                    blue_bumper_min_h = int(blue_bumper_min_h_ntt.get())
+                    blue_bumper_min_s = int(blue_bumper_min_s_ntt.get())
+                    blue_bumper_min_v = int(blue_bumper_min_v_ntt.get())
+                    blue_bumper_max_h = int(blue_bumper_max_h_ntt.get())
+                    blue_bumper_max_s = int(blue_bumper_max_s_ntt.get())
+                    blue_bumper_max_v = int(blue_bumper_max_v_ntt.get())
+                    blue_bumper_min_area = int(blue_bumper_min_area_ntt.get())
+                    bumper_y_crop = int(bumper_y_crop_ntt.get())
 
-                red_bumper_min_h = int(red_bumper_min_h_ntt.get())
-                red_bumper_min_s = int(red_bumper_min_s_ntt.get())
-                red_bumper_min_v = int(red_bumper_min_v_ntt.get())
-                red_bumper_max_h = int(red_bumper_max_h_ntt.get())
-                red_bumper_max_s = int(red_bumper_max_s_ntt.get())
-                red_bumper_max_v = int(red_bumper_max_v_ntt.get())
-                red_bumper_min_area = int(red_bumper_min_area_ntt.get())
-                blue_bumper_min_h = int(blue_bumper_min_h_ntt.get())
-                blue_bumper_min_s = int(blue_bumper_min_s_ntt.get())
-                blue_bumper_min_v = int(blue_bumper_min_v_ntt.get())
-                blue_bumper_max_h = int(blue_bumper_max_h_ntt.get())
-                blue_bumper_max_s = int(blue_bumper_max_s_ntt.get())
-                blue_bumper_max_v = int(blue_bumper_max_v_ntt.get())
-                blue_bumper_min_area = int(blue_bumper_min_area_ntt.get())
-                bumper_y_crop = int(bumper_y_crop_ntt.get())
-
-            bumper_data = []
-
-            if bumper_enable_ntt.get() == True:
+            if en_f == False and en_b == True:
 
                 red_low = np.array([red_bumper_min_h, red_bumper_min_s, red_bumper_min_v])
                 red_high = np.array([red_bumper_max_h, red_bumper_max_s, red_bumper_max_v])
@@ -1556,7 +1571,7 @@ def main():
                 blue_high = np.array([blue_bumper_max_h, blue_bumper_max_s, blue_bumper_max_v])
                 blue_mask = cv2.inRange(img_HSV, blue_low, blue_high)
 
-                #bumper_data = []
+                bumper_data = []
                 masks = [red_mask, blue_mask]
                 min_areas = [red_bumper_min_area, blue_bumper_min_area]
                 biggest_area = 0
@@ -1575,12 +1590,11 @@ def main():
                             if bumper_contour is not None:
                                 bumper_loc = (int(r_x + (0.5*r_w)), (r_y + r_h))
                                 r_x,r_y,r_w,r_h = cv2.boundingRect(bumper_contour)
-                                if db_f == True:
-                                    if i == 0:
-                                        cv2.rectangle(img,(r_x,0), (r_x+r_w, r_y+r_h), (0,0,255), 2)
-                                    else:
-                                        cv2.rectangle(img,(r_x,0), (r_x+r_w, r_y+r_h), (255,0,0), 2)
-                                    cv2.rectangle(img_HSV,(r_x,0), (r_x+r_w, r_y+r_h), (0,0,0), -1)
+                                if i == 0:
+                                    cv2.rectangle(img,(r_x,0), (r_x+r_w, r_y+r_h), (0,0,255), 2)
+                                else:
+                                    cv2.rectangle(img,(r_x,0), (r_x+r_w, r_y+r_h), (255,0,0), 2)
+                                cv2.rectangle(img_HSV,(r_x,0), (r_x+r_w, r_y+r_h), (0,0,0), -1)
 
                                 if bumper_loc[1] >= 440: # don't see a full bumper this close, so y value for this distance is a bit off so force it to 0
                                     distance = 0
@@ -1599,22 +1613,21 @@ def main():
                                     bumper_y_val_ntt.set(bumper_y)
                                     bumper_x_val_ntt.set(bumper_x)
 
-                                
-            #    for i in range(len(low_left)):                
-            #        cv2.circle(img, low_left[i], 8, (255, 0, 255), -1)
-            #        cv2.circle(img, low_right[i], 8, (255, 255, 0), -1)
+                                    
+                #    for i in range(len(low_left)):                
+                #        cv2.circle(img, low_left[i], 8, (255, 0, 255), -1)
+                #        cv2.circle(img, low_right[i], 8, (255, 255, 0), -1)
 
-            fuel_data = []
-            if fuel_enable_ntt.get() == True:
- 
-                '''
-                # filter colors in HSV space
-                img_HSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-                '''
-                # even though image capture format is RGB888, images are stored as BGR
-                # for HSV filtering / masking / detecting, convert input image from BGR to HSV
-                # but for displaying the image, convert input image from BGR to RGB
-                
+            '''
+            # filter colors in HSV space
+            img_HSV = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+            '''
+            # even though image capture format is RGB888, images are stored as BGR
+            # for HSV filtering / masking / detecting, convert input image from BGR to HSV
+            # but for displaying the image, convert input image from BGR to RGB
+            
+            if en_f == True and en_b == False:
+
                 # only keep pixels with colors that match the range in color_config
                 color_low = np.array([fuel_min_h, fuel_min_s, fuel_min_v])
                 color_high = np.array([fuel_max_h, fuel_max_s, fuel_max_v])
@@ -1638,7 +1651,7 @@ def main():
                 area = 1
                 maxRatioDiff = 0
                 max_inverse_area = 0
-                #fuel_data = []
+                fuel_data = []
                 orient = orientation.NONE
                 for y in colorSorted:
                     
@@ -1734,8 +1747,7 @@ def main():
                                         else:
                                             extent_min = 0.25'''
 
-                                        if db_f == True:
-                                            cv2.rectangle(img, (r_x, r_y), (r_x + r_w, r_y + r_h), (0, 0, 0), 2)          
+                                        cv2.rectangle(img, (r_x, r_y), (r_x + r_w, r_y + r_h), (0, 0, 0), 2)          
 
                                         #Extent is the ratio of contour area to bounding rectangle area.
                                         #extent = float(area) / (r_w * r_h)
@@ -1770,70 +1782,75 @@ def main():
                                             fuel_data.append(Fuel_Data_Class(distance, angle, orient, amount))
                                             
                                             #End of contour loop
-                
-            #if max_contour is not None and not fuel_data:
-            if (len(fuel_data) > 0 or len(bumper_data) > 0):
-                image_num += 1
-                image_counter += 1
-                image_time = (time.process_time() - t1_time)
-                image_time_av_total += image_time
+            
+            if en_f == True or en_b == True:
 
-                if image_counter == FPS_NUM_SAMPLES:
-                    fps_av = 1/(image_time_av_total/image_counter)
-                    if fps_av < fps_av_min:
-                        fps_av_min = fps_av
-                    if fps_av > fps_av_max:
-                        fps_av_max = fps_av
-                    image_time_av_total = 0
-                    image_counter = 0
+                #if max_contour is not None and not fuel_data:
+                if (len(fuel_data) > 0 or len(bumper_data) > 0):
+                    image_num += 1
+                    image_counter += 1
+                    image_time = (time.process_time() - t1_time)
+                    image_time_av_total += image_time
+
+                    if image_counter == FPS_NUM_SAMPLES:
+                        fps_av = 1/(image_time_av_total/image_counter)
+                        if fps_av < fps_av_min:
+                            fps_av_min = fps_av
+                        if fps_av > fps_av_max:
+                            fps_av_max = fps_av
+                        image_time_av_total = 0
+                        image_counter = 0
 
 
-                #print(f'd={fuel_data[0].distance:3.2f} a={fuel_data[0].angle:3.2f} o={fuel_data[0].orientation} amt={fuel_data[0].amount}')
+                    #print(f'd={fuel_data[0].distance:3.2f} a={fuel_data[0].angle:3.2f} o={fuel_data[0].orientation} amt={fuel_data[0].amount}')
 
-                #print(len(fuel_data))
-                pose_data = piece_pose_data_bytes(image_num, rio_time, image_time, fuel_data, bumper_data)
-                fuel_pose_data_bytes_ntt.set(pose_data)
-                NetworkTableInstance.getDefault().flush()
-                frame_rate_ntt.set(round(fps_av, 1))   
+                    #print(len(fuel_data))
+                    pose_data = piece_pose_data_bytes(image_num, rio_time, image_time, fuel_data, bumper_data)
+                    fuel_pose_data_bytes_ntt.set(pose_data)
+                    NetworkTableInstance.getDefault().flush()
+                    frame_rate_ntt.set(round(fps_av, 1))   
+                    if db_f == True:
+                        txt = piece_pose_data_string(image_num, rio_time, image_time, fuel_data, bumper_data)
+                        #print(txt)
+                        fuel_pose_data_string_header_ntt.set(txt)
+                        if max_contour is not None:
+                            fuel_area_ntt.set(max_area)
+                        '''fuel_distance_ntt.set(round(distance,2))
+                        fuel_angle_ntt.set(round(angle,2))'''   
+                        if(len(fuel_data) > 0):
+                            fuel_y_val_ntt.set(yVal)   
+                            fuel_x_val_ntt.set(xVal)   
+                        #fuel_orientation_ntt.set(orient.name)    
+                        #frame_rate_ntt.set(round(fps_av, 1))          
+                        #cv2.circle(img, (center_x, center_y), 6, (255,0,255), -1)
+                        #cv2.drawContours(img, [max_contour], 0, (200,0,0), 4)
+                        fuel_config_save(fuelConfigSave)
+                        bumper_config_save(bumperConfigSave)
+                        outputStreamFuel.putFrame(img) # send to dashboard
+                        outputMask.putFrame(img_mask) # send to dashboard
+                        outputRedBumperMask.putFrame(red_mask)
+                        outputBlueBumperMask.putFrame(blue_mask)
+                        if fuel_record_data_ntt.get() == True:
+                            fuel_data = f'{area:4.1f},{extent:2.1f},{center_x},{center_y},{distance:3.1f},{angle:2.1f}'
+                            with open('fuel_data.txt', 'a') as f:
+                                f.write(fuel_data)
+                                f.write('\n')
+                            fuel_record_data_ntt.set(False)
+                        continue
+
+            if en_f == True or en_b == True:
+
                 if db_f == True:
-                    txt = piece_pose_data_string(image_num, rio_time, image_time, fuel_data, bumper_data)
-                    #print(txt)
-                    fuel_pose_data_string_header_ntt.set(txt)
-                    if max_contour is not None:
-                        fuel_area_ntt.set(max_area)
-                    '''fuel_distance_ntt.set(round(distance,2))
-                    fuel_angle_ntt.set(round(angle,2))'''   
-                    if(len(fuel_data) > 0):
-                        fuel_y_val_ntt.set(yVal)   
-                        fuel_x_val_ntt.set(xVal)   
-                    #fuel_orientation_ntt.set(orient.name)    
-                    #frame_rate_ntt.set(round(fps_av, 1))          
-                    #cv2.circle(img, (center_x, center_y), 6, (255,0,255), -1)
-                    #cv2.drawContours(img, [max_contour], 0, (200,0,0), 4)
                     fuel_config_save(fuelConfigSave)
                     bumper_config_save(bumperConfigSave)
                     outputStreamFuel.putFrame(img) # send to dashboard
                     outputMask.putFrame(img_mask) # send to dashboard
-                    outputRedBumperMask.putFrame(red_mask)
-                    outputBlueBumperMask.putFrame(blue_mask)
-                    if fuel_record_data_ntt.get() == True:
-                        fuel_data = f'{area:4.1f},{extent:2.1f},{center_x},{center_y},{distance:3.1f},{angle:2.1f}'
-                        with open('fuel_data.txt', 'a') as f:
-                            f.write(fuel_data)
-                            f.write('\n')
-                        fuel_record_data_ntt.set(False)
-                    continue
-
-            if db_f == True:
-                fuel_config_save(fuelConfigSave)
-                bumper_config_save(bumperConfigSave)
-                outputStreamFuel.putFrame(img) # send to dashboard
-                outputMask.putFrame(img_mask) # send to dashboard
-                outputRedBumperMask.putFrame(red_mask)
-                outputBlueBumperMask.putFrame(blue_mask)
-
-
-                    
+                    if en_b == True:
+                        if red_mask is not None:
+                            outputRedBumperMask.putFrame(red_mask)
+                        if blue_mask is not None:
+                            outputBlueBumperMask.putFrame(blue_mask)
+    
         else:
             continue
 
